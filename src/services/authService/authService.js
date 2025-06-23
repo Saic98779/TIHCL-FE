@@ -2,14 +2,14 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const adminLogin = async (email, password) => {
+export const adminLogin = async (identifiers, password) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, { identifiers, password });
     if (response.data.token) {
       localStorage.setItem('jwtToken', response.data.token);
       localStorage.setItem('userData', JSON.stringify({
         userId: response.data.userId,
-        email: response.data.email,
+        identifiers: response.data.identifiers,
         role: response.data.userRole,
         UserName: response.data.userName
       }));

@@ -9,45 +9,45 @@ import { adminLogin } from '../../services/authService/authService';
 const Login = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('executive1@gmail.com'); // Pre-filled for demo
+  const [identifiers, setidentifiers] = useState('executive1@gmail.com'); // Pre-filled for demo
   const [password, setPassword] = useState('password123'); // Pre-filled for demo
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
 
   const validatePhone = () => {
-  setError('');
-  
-  if (!phone.trim()) {
-    setError('Please enter your phone number');
-    return false;
-  }
-  
-  // Check if contains non-digits
-  if (/\D/.test(phone)) {
-    setError('Phone number should only contain numbers');
-    return false;
-  }
-  
-  // Check starting digit
-  if (!/^[5-9]/.test(phone)) {
-    setError('Phone number must start with 5, 6, 7, 8 or 9');
-    return false;
-  }
-  
-  // Check length
-  if (phone.length < 10) {
-    setError('Phone number is too short (10 digits required)');
-    return false;
-  }
-  
-  if (phone.length > 10) {
-    setError('Phone number is too long (10 digits maximum)');
-    return false;
-  }
-  
-  return true;
-};
+    setError('');
+
+    if (!phone.trim()) {
+      setError('Please enter your phone number');
+      return false;
+    }
+
+    // Check if contains non-digits
+    if (/\D/.test(phone)) {
+      setError('Phone number should only contain numbers');
+      return false;
+    }
+
+    // Check starting digit
+    if (!/^[5-9]/.test(phone)) {
+      setError('Phone number must start with 5, 6, 7, 8 or 9');
+      return false;
+    }
+
+    // Check length
+    if (phone.length < 10) {
+      setError('Phone number is too short (10 digits required)');
+      return false;
+    }
+
+    if (phone.length > 10) {
+      setError('Phone number is too long (10 digits maximum)');
+      return false;
+    }
+
+    return true;
+  };
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -55,7 +55,7 @@ const Login = () => {
     setError('');
 
     try {
-      await adminLogin(email, password);
+      await adminLogin(identifiers, password);
       //navigate('/dashboard'); // Redirect to admin dashboard
     } catch (error) {
       setError(error.response?.data?.message || 'Admin login failed. Please try again.');
@@ -75,7 +75,7 @@ const Login = () => {
       // Store phone in localStorage for OTP verification and later use
       localStorage.setItem('userPhone', phone);
       localStorage.setItem('primaryContactNumber', phone);
-      
+
       // Navigate to OTP page
       navigate('/Otp');
     } catch (error) {
@@ -96,7 +96,7 @@ const Login = () => {
                 <div className="text-center mb-4">
                   <img src={logo} alt="Logo" className="img-fluid" width="120" />
                 </div>
-                
+
                 {isAdminLogin ? (
                   <>
                     <h5 className="text-center mb-3"></h5>
@@ -151,37 +151,37 @@ const Login = () => {
                     <form onSubmit={handlePhoneLogin}>
                       <div className="form-floating mb-3">
                         <input
-  type="tel"
-  className={`form-control ${error ? 'is-invalid' : ''}`}
-  id="phone"
-  placeholder="Enter 10-digit mobile number"
-  value={phone}
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setPhone(value);
-    // Clear error when user starts correcting
-    if (error && (
-      (error.includes('short') && value.length >= 10) ||
-      (error.includes('long') && value.length <= 10) ||
-      (error.includes('start') && /^[5-9]/.test(value)) ||
-      (error.includes('only contain') && !/\D/.test(value))
-    )) {
-      setError('');
-    }
-  }}
-  onBlur={() => {
-    if (phone.length === 10) validatePhone();
-  }}
-  disabled={isLoading}
-  inputMode="numeric"
-/>
+                          type="tel"
+                          className={`form-control ${error ? 'is-invalid' : ''}`}
+                          id="phone"
+                          placeholder="Enter 10-digit mobile number"
+                          value={phone}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setPhone(value);
+                            // Clear error when user starts correcting
+                            if (error && (
+                              (error.includes('short') && value.length >= 10) ||
+                              (error.includes('long') && value.length <= 10) ||
+                              (error.includes('start') && /^[5-9]/.test(value)) ||
+                              (error.includes('only contain') && !/\D/.test(value))
+                            )) {
+                              setError('');
+                            }
+                          }}
+                          onBlur={() => {
+                            if (phone.length === 10) validatePhone();
+                          }}
+                          disabled={isLoading}
+                          inputMode="numeric"
+                        />
                         <label htmlFor="phone">Mobile No.</label>
                         {error && <div className="invalid-feedback">{error}</div>}
                       </div>
 
                       <div className="d-grid mb-3">
-                        <button 
-                          type="submit" 
+                        <button
+                          type="submit"
                           className="btn btn-primary"
                           disabled={isLoading}
                         >

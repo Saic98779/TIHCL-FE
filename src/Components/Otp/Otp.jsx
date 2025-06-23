@@ -14,10 +14,10 @@ const Otp = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const ADMIN_CREDS = {
-    email: 'executive1@gmail.com',
-    password: 'password123'
-  };
+  // const ADMIN_CREDS = {
+  //   email: 'executive1@gmail.com',
+  //   password: 'password123'
+  // };
 
   const validateOtp = useCallback(() => {
     setError('');
