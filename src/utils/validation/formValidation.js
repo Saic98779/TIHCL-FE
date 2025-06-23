@@ -49,10 +49,10 @@ export const validateField = (name, value, formData) => {
             else if (value.length < 5) error = 'Address too short (min 10 chars)';
             break;
 
-        case 'email':
-            if (!value) error = 'Email is required';
-            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
-            break;
+        // case 'email':
+        //     if (!value) error = 'Email is required';
+        //     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
+        //     break;
 
         case 'enterpriseCategory':
             if (!value) error = 'Please select enterprise category';

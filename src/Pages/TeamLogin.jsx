@@ -73,7 +73,7 @@ const TeamLogin = () => {
                 <form onSubmit={handleLogin}>
                   <div className="form-floating mb-3">
                     <input
-                      type="email"
+                      type="text"
                       className={`form-control ${error ? 'is-invalid' : ''}`}
                       id="identifier"
                       placeholder="name@example.com"
