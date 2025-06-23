@@ -3,23 +3,22 @@ import { Navigate } from 'react-router-dom';
 import { isAuthenticated, getUserRole } from '../../services/authService/authService';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/TeamLogin" replace />;
-  }
+  if (!isAuthenticated()) return <Navigate to="/TeamLogin" replace />;
 
   const userRole = getUserRole();
-  
-  // Check if user has any allowed role
-  const isAllowed = allowedRoles.some(allowedRole => 
-    userRole.includes(allowedRole) ||  // Check if role contains allowed role (for "EXECUTIVE-MANAGER")
-    allowedRole.includes(userRole)     // Or if allowed role contains user role
-  );
-  
-  if (!isAllowed) {
-    return <Navigate to="/unauthorized" replace />;
-  }
+  if (!userRole) return <Navigate to="/unauthorized" replace />;
 
-  return children;
+  // Handle the typo in role (MANEGER vs MANAGER)
+  const normalizedRole = userRole.toUpperCase().includes('MANAGER') ? 'MANAGER' : userRole;
+  
+  const roleString = String(normalizedRole).toUpperCase();
+  const isAllowed = allowedRoles.some(role =>
+    roleString.includes(role.toUpperCase()) ||
+    role.toUpperCase().includes(roleString)
+  );
+
+  return isAllowed ? children : <Navigate to="/unauthorized" replace />;
 };
+
 
 export default ProtectedRoute;

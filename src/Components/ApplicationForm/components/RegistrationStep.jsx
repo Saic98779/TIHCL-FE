@@ -10,7 +10,33 @@ const RegistrationStep = memo(({
     mandals = [],
     isLoadingDistricts,
     isLoadingMandals }) => {
-    console.log("Districts data:", districts);
+
+    // Modify the onChange handler to store names instead of IDs
+    const handleDistrictChange = (e) => {
+        const districtId = e.target.value;
+        const selectedDistrict = districts.find(d => d.districtId === districtId);
+        onChange({
+            target: {
+                name: 'district',
+                value: selectedDistrict ? selectedDistrict.districtName : ''
+            }
+        });
+    };
+
+    const handleMandalChange = (e) => {
+        const mandalId = e.target.value;
+        const selectedMandal = mandals.find(m => m.mandalId === mandalId);
+        onChange({
+            target: {
+                name: 'mandal',
+                value: selectedMandal ? selectedMandal.mandalName : ''
+            }
+        });
+    };
+
+    // Find the current selected IDs for the dropdowns
+    const selectedDistrictId = districts.find(d => d.districtName === formData.district)?.districtId || '';
+    const selectedMandalId = mandals.find(m => m.mandalName === formData.mandal)?.mandalId || '';
     return (
         <div className="step step-1">
             <div className="card">

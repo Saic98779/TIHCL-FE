@@ -16,13 +16,38 @@ const Login = () => {
   const [isAdminLogin, setIsAdminLogin] = useState(false);
 
   const validatePhone = () => {
-    if (!phone.trim()) {
-      setError('Phone number is required');
-      return false;
-    }
-    setError('');
-    return true;
-  };
+  setError('');
+  
+  if (!phone.trim()) {
+    setError('Please enter your phone number');
+    return false;
+  }
+  
+  // Check if contains non-digits
+  if (/\D/.test(phone)) {
+    setError('Phone number should only contain numbers');
+    return false;
+  }
+  
+  // Check starting digit
+  if (!/^[5-9]/.test(phone)) {
+    setError('Phone number must start with 5, 6, 7, 8 or 9');
+    return false;
+  }
+  
+  // Check length
+  if (phone.length < 10) {
+    setError('Phone number is too short (10 digits required)');
+    return false;
+  }
+  
+  if (phone.length > 10) {
+    setError('Phone number is too long (10 digits maximum)');
+    return false;
+  }
+  
+  return true;
+};
 
   const handleAdminLogin = async (e) => {
     e.preventDefault();
@@ -31,7 +56,7 @@ const Login = () => {
 
     try {
       await adminLogin(email, password);
-      navigate('/dashboard'); // Redirect to admin dashboard
+      //navigate('/dashboard'); // Redirect to admin dashboard
     } catch (error) {
       setError(error.response?.data?.message || 'Admin login failed. Please try again.');
     } finally {
@@ -74,9 +99,9 @@ const Login = () => {
                 
                 {isAdminLogin ? (
                   <>
-                    <h5 className="text-center mb-3">Admin Login</h5>
+                    <h5 className="text-center mb-3"></h5>
                     <form onSubmit={handleAdminLogin}>
-                      <div className="form-floating mb-3">
+                      {/* <div className="form-floating mb-3">
                         <input
                           type="email"
                           className="form-control"
@@ -87,8 +112,8 @@ const Login = () => {
                           required
                         />
                         <label htmlFor="email">Email</label>
-                      </div>
-                      <div className="form-floating mb-3">
+                      </div> */}
+                      {/* <div className="form-floating mb-3">
                         <input
                           type="password"
                           className="form-control"
@@ -99,8 +124,8 @@ const Login = () => {
                           required
                         />
                         <label htmlFor="password">Password</label>
-                      </div>
-                      <div className="d-grid mb-3">
+                      </div> */}
+                      {/* <div className="d-grid mb-3">
                         <button 
                           type="submit" 
                           className="btn btn-primary"
@@ -108,8 +133,8 @@ const Login = () => {
                         >
                           {isLoading ? 'Logging in...' : 'Login'}
                         </button>
-                      </div>
-                      <div className="text-center">
+                      </div> */}
+                      {/* <div className="text-center">
                         <button 
                           type="button" 
                           className="btn btn-link"
@@ -117,7 +142,7 @@ const Login = () => {
                         >
                           Back to User Login
                         </button>
-                      </div>
+                      </div> */}
                     </form>
                   </>
                 ) : (
@@ -126,17 +151,30 @@ const Login = () => {
                     <form onSubmit={handlePhoneLogin}>
                       <div className="form-floating mb-3">
                         <input
-                          type="text"
-                          className={`form-control ${error ? 'is-invalid' : ''}`}
-                          id="phone"
-                          placeholder="Mobile No."
-                          value={phone}
-                          onChange={(e) => {
-                            setPhone(e.target.value);
-                            if (error) validatePhone();
-                          }}
-                          disabled={isLoading}
-                        />
+  type="tel"
+  className={`form-control ${error ? 'is-invalid' : ''}`}
+  id="phone"
+  placeholder="Enter 10-digit mobile number"
+  value={phone}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, '');
+    setPhone(value);
+    // Clear error when user starts correcting
+    if (error && (
+      (error.includes('short') && value.length >= 10) ||
+      (error.includes('long') && value.length <= 10) ||
+      (error.includes('start') && /^[5-9]/.test(value)) ||
+      (error.includes('only contain') && !/\D/.test(value))
+    )) {
+      setError('');
+    }
+  }}
+  onBlur={() => {
+    if (phone.length === 10) validatePhone();
+  }}
+  disabled={isLoading}
+  inputMode="numeric"
+/>
                         <label htmlFor="phone">Mobile No.</label>
                         {error && <div className="invalid-feedback">{error}</div>}
                       </div>
@@ -155,7 +193,7 @@ const Login = () => {
                           ) : 'Send OTP'}
                         </button>
                       </div>
-                      <div className="text-center">
+                      {/* <div className="text-center">
                         <button 
                           type="button" 
                           className="btn btn-link"
@@ -163,7 +201,7 @@ const Login = () => {
                         >
                           Admin Login
                         </button>
-                      </div>
+                      </div> */}
                     </form>
                   </>
                 )}

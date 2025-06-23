@@ -34,7 +34,7 @@ export const validateField = (name, value, formData) => {
 
         // case 'contactDetails':
         //     if (!value) error = 'Contact details are required';
-        //     else if (!/^[6-9]\d{9}$/.test(value)) error = 'Invalid Indian phone number';
+        //     else if (!/^[0-9]\d{9}$/.test(value)) error = 'Invalid Indian phone number';
         //     break;
 
         // case 'state':

@@ -7,45 +7,58 @@ const BACKEND_URL = import.meta.env.VITE_API_BASE_URL;
 
 const TeamLogin = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('executive1@gmail.com');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  e.preventDefault();
 
-    try {
-      const response = await axios.post(`${BACKEND_URL}/auth/login`, {
-        email,
-        password
-      });
+  if (!identifier || !password) {
+    setError('Please enter both identifier and password');
+    return;
+  }
 
-      const { token, userRole, userId } = response.data;
-      
-      if (!token) {
-        throw new Error('Authentication failed');
-      }
+  setIsLoading(true);
+  setError('');
 
-      localStorage.setItem('jwtToken', token);
-      localStorage.setItem('userData', JSON.stringify({
-        userId,
-        email,
-        role: userRole
-      }));
+  try {
+    const response = await axios.post(`${BACKEND_URL}/auth/login`, {
+      identifier,
+      password
+    });
 
-      // Redirect to ApplicationNew for all executive/manager roles
+    const { token, userRole, userId } = response.data;
+
+    if (!token) throw new Error('Authentication failed');
+
+    localStorage.setItem('jwtToken', token);
+    localStorage.setItem('userData', JSON.stringify({
+      userId,
+      identifier,
+      role: userRole
+    }));
+
+    // Convert role to uppercase for consistent comparison
+    const normalizedRole = userRole.toUpperCase();
+    
+    // Redirect based on exact role matches
+    if (normalizedRole === 'MANEGER' || normalizedRole === 'MANAGER') {
+      navigate('/Manager');
+    } else if (normalizedRole === 'EXECUTIVE-MANAGER') {
       navigate('/ApplicationNew');
-      
-    } catch (error) {
-      console.error("Login error:", error);
-      setError(error.response?.data?.message || 'Invalid credentials. Please try again.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      navigate('/TeamLogin');
     }
-  };
+    
+  } catch (error) {
+    console.error("Login error:", error);
+    setError(error.response?.data?.message || 'Invalid credentials. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div className="login-wrapper" style={{ backgroundImage: `url(${bgImage})` }}>
       <section className="login-content">
@@ -62,18 +75,15 @@ const TeamLogin = () => {
                     <input
                       type="email"
                       className={`form-control ${error ? 'is-invalid' : ''}`}
-                      id="email"
-                      placeholder="Email"
-                      value={email}
-                      onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (error) setError('');
-                      }}
+                      id="identifier"
+                      placeholder="name@example.com"
+                      value={identifier}
+                      onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading}
+                      required
                     />
-                    <label htmlFor="email">Email</label>
+                    <label htmlFor="email">Email address</label>
                   </div>
-
                   <div className="form-floating mb-3">
                     <input
                       type="password"
@@ -81,27 +91,17 @@ const TeamLogin = () => {
                       id="password"
                       placeholder="Password"
                       value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (error) setError('');
-                      }}
+                      onChange={(e) => setPassword(e.target.value)}
                       disabled={isLoading}
+                      required
                     />
                     <label htmlFor="password">Password</label>
                     {error && <div className="invalid-feedback">{error}</div>}
                   </div>
-
                   <div className="d-grid mb-3">
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary"
-                      disabled={isLoading}
-                    >
+                    <button type="submit" className="btn btn-primary" disabled={isLoading}>
                       {isLoading ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                          Logging in...
-                        </>
+                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Logging in...</>
                       ) : 'Login'}
                     </button>
                   </div>

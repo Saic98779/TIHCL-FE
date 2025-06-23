@@ -1,124 +1,180 @@
-import React, { useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-icons/font/bootstrap-icons.min.css";
-//import "datatables.net-dt/css/jquery.dataTables.css";
-import "datatables.net-bs5/css/dataTables.bootstrap5.css";
-import $ from "jquery";
-import "datatables.net";
-import "datatables.net-bs5";
-import ApplicationPending from '../../Components/ApplicationPending/ApplicationPending'
+import React, { useEffect, useState } from "react";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { NewApplication } from "../../services/RegistrationService/RegistrationService";
+import Header from "../ExecutiveHeader/Header";
+import { useNavigate } from "react-router-dom";
+
 const ApplicationNew = () => {
-  useEffect(() => {
-    const table = $('#pending_table');
+  const [applications, setApplications] = useState([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
-    if ($.fn.DataTable.isDataTable(table)) {
-      table.DataTable().destroy();
+  const pageSize = 4;
+
+  const fetchApplications = async (page) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await NewApplication(page, pageSize);
+      const data = Array.isArray(res?.content) ? res.content : [];
+      setApplications(data);
+      setTotalItems(res.totalElements || 0);
+    } catch (err) {
+      console.error("API error:", err);
+      setError("Failed to load applications");
+      setApplications([]);
+      setTotalItems(0);
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    table.DataTable({
-      scrollY: "379px",
-      scrollX: true,
-      scrollCollapse: true,
-      autoWidth: true,
-      paging: true,
-      info: false,
-      searching: false,
+  useEffect(() => {
+    fetchApplications(currentPage);
+  }, [currentPage]);
+
+  const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const getVisiblePages = () => {
+    const visiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(visiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + visiblePages - 1);
+    startPage = Math.max(1, endPage - visiblePages + 1);
+
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  };
+
+  const handleSelectApplication = (application) => {
+    navigate('/Status', { 
+      state: { 
+        application,
+        initialStep: 1
+      } 
     });
-
-    // Clean up DataTable on component unmount
-    return () => {
-      if ($.fn.DataTable.isDataTable(table)) {
-        table.DataTable().destroy();
-      }
-    };
-  }, []);
-
+  };
 
   return (
-    <div>
-      <header>
-        <nav className="navbar navbar-expand-lg fixed-top navbar-light bg-light">
-          <div className="container-fluid d-block">
-            <div className="row">
-              <div className="col-6 col-md-4">
-                <a className="navbar-brand" href="#">
-                  <img src="assets/img/tihcl-logo.png" alt="Logo" className="img-fluid w-auto" />
-                </a>
-              </div>
-              <div className="col-6 col-md-8">
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                  <span className="navbar-toggler-icon"></span>
-                </button>
-                <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                  <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li className="nav-item">
-                      <a className="nav-link" aria-current="page" href="#">Dashboard</a>
-                    </li>
-                    <li className="nav-item dropdown">
-                      <a className="nav-link dropdown-toggle active" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Applications
-                      </a>
-                      <ul className="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a className="dropdown-item active" href="application-new.html">New</a></li>
-                        <li><a className="dropdown-item" href="application-pending.html">Pending</a></li>
-                      </ul>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" href="#">Repayment</a>
-                    </li>
-                    <li className="nav-item">
-                      <a className="nav-link" href="#">Update Performance</a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+    <>
+      <Header className="mb-4"/>
+      <div className="application-new-container mt-5">
+        <div className="card">
+          <div className="card-header bg-theme text-white d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">New Applications</h6>
           </div>
-        </nav>
-      </header>
 
-      <main className="pt-80">
-        <section className="pt-3">
-          <div className="container-fluid">
-            <div className="card">
-              <div className="card-header bg-theme text-white">
-                <h6 className="mb-0">New Application</h6>
+          <div className="card-body">
+            {isLoading ? (
+              <div className="text-center py-4">
+                <div className="spinner-border text-primary" role="status" />
+                <p className="mt-2">Loading applications...</p>
               </div>
-              <div className="card-body">
-                <table id="pending_table" className="table nowrap display w-100 fs-md mt-0">
-                  <thead>
-                    <tr>
-                      <th className="text-start">S.No</th>
-                      <th>Name Of Organisation</th>
-                      <th>Name Of Entrepreneur</th>
-                      <th className="text-start">Mobile No.</th>
-                      <th>Date Of Application</th>
-                      <th className="text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[1, 2, 3, 4].map((num) => (
-                      <tr key={num}>
-                        <td className="text-start">{num}</td>
-                        <td>Organisation 1</td>
-                        <td>Entrepreneur 1</td>
-                        <td className="text-start">9876543210</td>
-                        <td>14-06-2025</td>
-                        <td className="text-center">
-                          <a href="status.html" className="btn btn-outline-primary btn-sm shadow-none">
-                            select
-                          </a>
-                        </td>
+            ) : error ? (
+              <div className="alert alert-danger text-center">{error}</div>
+            ) : applications.length === 0 ? (
+              <div className="text-center py-4">
+                <i className="bi bi-inbox fs-1 text-muted"></i>
+                <p className="mt-2">No applications found</p>
+              </div>
+            ) : (
+              <>
+                <div className="table-responsive">
+                  <table className="table table-hover w-100">
+                    <thead className="table-light">
+                      <tr>
+                        <th>App No.</th>
+                        <th>Enterprise</th>
+                        <th>Promoter</th>
+                        <th>Contact</th>
+                        <th>Date</th>
+                        <th>Action</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      {applications.map((app, index) => (
+                        <tr key={app.registrationUsageId || index}>
+                          <td>{app.applicationNo || "N/A"}</td>
+                          <td>{app.enterpriseName || "N/A"}</td>
+                          <td>{app.promoterName || "N/A"}</td>
+                          <td>{app.contactNumber || "N/A"}</td>
+                          <td>{app.createdOn ? new Date(app.createdOn).toLocaleDateString() : "N/A"}</td>
+                          <td>
+                            <button 
+                              className="btn btn-sm btn-outline-primary"
+                              onClick={() => handleSelectApplication(app)}
+                            >
+                              Select
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                  <div>
+                    Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                    {Math.min(currentPage * pageSize, totalItems)} of {totalItems} entries
+                  </div>
+                  <div className="d-flex">
+                    <button
+                      className="btn btn-sm btn-outline-primary me-2"
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1}
+                    >
+                      First
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-primary me-2"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+
+                    {getVisiblePages().map((page) => (
+                      <button
+                        key={page}
+                        className={`btn btn-sm ${currentPage === page ? "btn-primary" : "btn-outline-primary"} me-2`}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </button>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+
+                    <button
+                      className="btn btn-sm btn-outline-primary me-2"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                    <button
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Last
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 

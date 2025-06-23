@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import SuccessStatuImg from '../../../assets/success.png'
-const StatusStep = memo(({ registrationId, submissionDate }) => {
+const StatusStep = memo(({ registrationId, submissionDate, ApplicationStatus }) => {
     return (
         <div className="step step-3">
             <div className="card mb-3">
@@ -35,7 +35,7 @@ const StatusStep = memo(({ registrationId, submissionDate }) => {
                                         <p className="fw-600 fs-md mb-0">Application Status</p>
                                     </div>
                                     <div>
-                                        <p className="fs-md text-warning mb-0">Pending Review</p>
+                                        <p className="fs-md text-warning mb-0">{ApplicationStatus}</p>
                                     </div>
                                 </div>
                             </div>
