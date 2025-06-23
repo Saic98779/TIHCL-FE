@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export const adminLogin = async (identifiers, password) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/auth/login`, { identifiers, password });
+    console.log('logged in successfully:', response.data)
     if (response.data.token) {
       localStorage.setItem('jwtToken', response.data.token);
       localStorage.setItem('userData', JSON.stringify({

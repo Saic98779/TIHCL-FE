@@ -243,7 +243,7 @@ const ApplicationForm = () => {
         setCurrentStep(prev => prev > 1 ? prev - 1 : prev);
     }, []);
 
-   const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
   if (!validateStep(2, formData, setErrors)) return;
 
   setIsSubmitting(true);
@@ -257,7 +257,7 @@ const ApplicationForm = () => {
       ...formData,
       primaryContactNumber: primaryContact,
       contactDetails: alternativeContact
-    }, districts, mandals); // Pass districts and mandals here
+    }, districts, mandals);
 
     const response = await saveRegistration(apiData);
     setApplicationStatus(response.data?.applicationStatus || 'APPLICATION_SUBMITTED');
@@ -268,7 +268,8 @@ const ApplicationForm = () => {
     localStorage.removeItem('primaryContactNumber');
     localStorage.removeItem('userPhone');
   } catch (error) {
-    // ... error handling remains the same
+    console.error('Submission failed:', error);
+    setSubmitError(error.message || 'Failed to submit application. Please try again.');
   } finally {
     setIsSubmitting(false);
   }

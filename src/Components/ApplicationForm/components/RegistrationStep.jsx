@@ -12,31 +12,29 @@ const RegistrationStep = memo(({
     isLoadingMandals }) => {
 
     // Modify the onChange handler to store names instead of IDs
-    const handleDistrictChange = (e) => {
-        const districtId = e.target.value;
-        const selectedDistrict = districts.find(d => d.districtId === districtId);
-        onChange({
-            target: {
-                name: 'district',
-                value: selectedDistrict ? selectedDistrict.districtName : ''
-            }
-        });
-    };
+   const handleDistrictChange = (e) => {
+    const districtId = e.target.value;
+    onChange({
+        target: {
+            name: 'district',
+            value: districtId // Store the ID directly
+        }
+    });
+};
 
     const handleMandalChange = (e) => {
-        const mandalId = e.target.value;
-        const selectedMandal = mandals.find(m => m.mandalId === mandalId);
-        onChange({
-            target: {
-                name: 'mandal',
-                value: selectedMandal ? selectedMandal.mandalName : ''
-            }
-        });
-    };
+    const mandalId = e.target.value;
+    onChange({
+        target: {
+            name: 'mandal',
+            value: mandalId // Store the ID directly
+        }
+    });
+};
 
     // Find the current selected IDs for the dropdowns
-    const selectedDistrictId = districts.find(d => d.districtName === formData.district)?.districtId || '';
-    const selectedMandalId = mandals.find(m => m.mandalName === formData.mandal)?.mandalId || '';
+   const selectedDistrictId = formData.district || '';
+const selectedMandalId = formData.mandal || '';
     return (
         <div className="step step-1">
             <div className="card">
@@ -217,68 +215,59 @@ const RegistrationStep = memo(({
                         </div>
 
 
-                        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-                            <div className="form-floating mb-3">
-                                <select
-                                    className={`form-select ${errors.district ? 'is-invalid' : ''}`}
-                                    id="district"
-                                    name="district"
-                                    value={formData.district}
-                                    onChange={onChange}
-                                    onBlur={onBlur}
-                                    required
-                                    disabled={isLoadingDistricts}
-                                >
-                                    <option value="">
-                                        {isLoadingDistricts ? 'Loading districts...' : 'Select District'}
-                                    </option>
-                                    {districts.map(district => (
-                                        <option key={district.districtId} value={district.districtId}>
-                                            {district.districtName}
-                                        </option>
-                                    ))}
-                                </select>
-                                <label htmlFor="district">District</label>
-                                {errors.district && (
-                                    <div className="invalid-feedback">{errors.district}</div>
-                                )}
-                                {isLoadingDistricts && (
-                                    <div className="text-muted small mt-1"></div>
-                                )}
-                            </div>
-                        </div>
+                        {/* District Field */}
+<div className="col-12 col-sm-6 col-md-4 col-lg-3">
+  <div className="form-floating mb-3">
+    <select
+      className={`form-select ${errors.district ? 'is-invalid' : ''}`}
+      id="district"
+      name="district"
+      value={selectedDistrictId}
+      onChange={handleDistrictChange}
+      onBlur={onBlur}
+      required
+      disabled={isLoadingDistricts}
+    >
+      <option value="">Select District</option>
+      {districts.map(district => (
+        <option key={district.districtId} value={district.districtId}>
+          {district.districtName}
+        </option>
+      ))}
+    </select>
+    <label htmlFor="district">District</label>
+    {errors.district && (
+      <div className="invalid-feedback">{errors.district}</div>
+    )}
+  </div>
+</div>
 
-                        {/* Mandal Field */}
-                        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-                            <div className="form-floating mb-3">
-                                <select
-                                    className={`form-select ${errors.mandal ? 'is-invalid' : ''}`}
-                                    id="mandal"
-                                    name="mandal"
-                                    value={formData.mandal}
-                                    onChange={onChange}
-                                    onBlur={onBlur}
-                                    required
-                                    disabled={!formData.district || isLoadingMandals}
-                                >
-                                    <option value="">
-                                        {isLoadingMandals ? 'Loading mandals...' : 'Select Mandal'}
-                                    </option>
-                                    {mandals.map(mandal => (
-                                        <option key={mandal.mandalId} value={mandal.mandalId}>
-                                            {mandal.mandalName}
-                                        </option>
-                                    ))}
-                                </select>
-                                <label htmlFor="mandal">Mandal</label>
-                                {isLoadingMandals && formData.district && (
-                                    <div className="text-muted small mt-1"></div>
-                                )}
-                                {errors.mandal && (
-                                    <div className="invalid-feedback">{errors.mandal}</div>
-                                )}
-                            </div>
-                        </div>
+{/* Mandal Field */}
+<div className="col-12 col-sm-6 col-md-4 col-lg-3">
+  <div className="form-floating mb-3">
+    <select
+      className={`form-select ${errors.mandal ? 'is-invalid' : ''}`}
+      id="mandal"
+      name="mandal"
+      value={selectedMandalId}
+      onChange={handleMandalChange}
+      onBlur={onBlur}
+      required
+      disabled={!formData.district || isLoadingMandals}
+    >
+      <option value="">Select Mandal</option>
+      {mandals.map(mandal => (
+        <option key={mandal.mandalId} value={mandal.mandalId}>
+          {mandal.mandalName}
+        </option>
+      ))}
+    </select>
+    <label htmlFor="mandal">Mandal</label>
+    {errors.mandal && (
+      <div className="invalid-feedback">{errors.mandal}</div>
+    )}
+  </div>
+</div>
 
                         <div className="col-12 col-sm-6 col-md-4 col-lg-3">
                             <div className="form-floating mb-3">

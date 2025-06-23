@@ -14,7 +14,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
-
+  console.log("identi",identifiers)
   const validatePhone = () => {
     setError('');
 
@@ -70,7 +70,7 @@ const Login = () => {
 
     setIsLoading(true);
     setError('');
-
+   setidentifiers(phone) ; // use phone as identifiers for otp verfication
     try {
       // Store phone in localStorage for OTP verification and later use
       localStorage.setItem('userPhone', phone);
@@ -156,6 +156,7 @@ const Login = () => {
                           id="phone"
                           placeholder="Enter 10-digit mobile number"
                           value={phone}
+                          
                           onChange={(e) => {
                             const value = e.target.value.replace(/\D/g, '');
                             setPhone(value);

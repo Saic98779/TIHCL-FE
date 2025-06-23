@@ -47,14 +47,14 @@ const Otp = () => {
   }, [otp, validateOtp]);
 
   const authenticateAdmin = async () => {
-    try {
-      await adminLogin(ADMIN_CREDS.email, ADMIN_CREDS.password);
-      return true;
-    } catch (error) {
-      console.error('Admin authentication failed:', error);
-      setError('System authentication failed. Please try again later.');
-      return false;
-    }
+    // try {
+    //   await adminLogin(ADMIN_CREDS.email, ADMIN_CREDS.password);
+    //   return true;
+    // } catch (error) {
+    //   console.error('Admin authentication failed:', error);
+    //   setError('System authentication failed. Please try again later.');
+    //   return false;
+    // }
   };
 
   const fetchRegistrationData = async (phone, token) => {

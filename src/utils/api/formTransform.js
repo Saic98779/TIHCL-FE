@@ -91,20 +91,51 @@ export const transformFormDataForApi = (formData, riskCategories) => {
 
 
 
-export const transformRegistrationData = (formData) => {
+export const transformRegistrationData = (formData, districts, mandals) => {
+  // Find district and mandal names from IDs
+  const districtObj = districts.find(d => d.districtId === formData.district);
+  const mandalObj = mandals.find(m => m.mandalId === formData.mandal);
+
   return {
     enterpriseName: formData.nameEnterprise,
     promoterName: formData.namePromoter,
     constitution: formData.constitution,
-    commencementDate: formData.dateProduction,
-    udyamNumber: formData.udyamRegistration,
-    contactNumber: formData.contactDetails,
-    email: formData.email,
-    state: formData.state,
-    district: formData.district, // Now directly using the name
-    mandal: formData.mandal,     // Now directly using the name
-    address: formData.address,
+    productionDate: formData.dateProduction,
+    udyamRegNumber: formData.udyamRegistration,
+    contactNumber: parseInt(formData.contactDetails) || 0,
+    altContactNumber: parseInt(formData.primaryContactNumber) || 0,
     industrialPark: formData.industrialPark,
-    applicationStatus: "APPLICATION_SUBMITTED"
+    state: formData.state,
+    district: districtObj?.districtName || '',
+    mandal: mandalObj?.mandalName || '',
+    email: formData.email,
+    address: formData.address,
+    enterpriseCategory: formData.enterpriseCategory,
+    natureOfActivity: formData.natureActivity,
+    sector: formData.sector,
+    operationStatus: formData.operationalStatus === 'operationalYes',
+    operatingSatisfactorily: formData.operatingSatisfactorily || '',
+    operatingDifficulties: formData.operatingDifficulties || '',
+    issueDate: formData.notOperatingSince || '',
+    reasonForNotOperating: formData.notOperatingReasons || '',
+    restartSupport: formData.restartSupport || '',
+    restartIntent: formData.restartIntention === 'restartYes',
+    existingCredit: formData.hasCreditFacilities === 'yes',
+    creditFacilityDetails: formData.creditFacilities.map(facility => ({
+      bankName: facility.bankName,
+      limitSanctioned: parseInt(facility.limitSanctioned) || 0,
+      outstandingAmount: parseInt(facility.outstandingAmount) || 0,
+      overdueAmount: parseInt(facility.overdueAmount) || 0,
+      overdueDate: facility.overdueSince || ''
+    })),
+    unitStatus: formData.creditStatus || '',
+    requiredCreditLimit: parseInt(formData.creditRequirements) || 0,
+    investmentSubsidy: formData.investmentSubsidy === 'yes',
+    totalAmountSanctioned: parseInt(formData.subsidyAmountSanctioned) || 0,
+    amountReleased: parseInt(formData.subsidyAmountReleased) || 0,
+    amountToBeReleased: parseInt(formData.subsidyAmountToBeReleased) || 0,
+    maintainingAccountBy: formData.accountsMaintenance || '',
+    helpMsg: formData.comments || '',
+    status: "Assessment Completed"
   };
 };
