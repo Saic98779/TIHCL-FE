@@ -37,12 +37,12 @@ export const validateField = (name, value, formData) => {
         //     else if (!/^[0-9]\d{9}$/.test(value)) error = 'Invalid Indian phone number';
         //     break;
 
-        // case 'state':
-        // case 'industrialPark':
-        // case 'district':
-        // case 'mandal':
-        //     if (!value) error = 'This field is required';
-        //     break;
+         case 'state':
+        case 'industrialPark':
+         case 'district':
+         case 'mandal':
+        if (!value) error = 'This field is required';
+             break;
 
         case 'address':
             if (!value.trim()) error = 'Address is required';

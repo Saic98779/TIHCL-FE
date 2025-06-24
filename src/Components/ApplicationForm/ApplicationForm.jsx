@@ -20,6 +20,7 @@ import logo from '../../assets/tihcl-logo.png';
 
 const ApplicationForm = () => {
     const location = useLocation();
+    
     const [currentStep, setCurrentStep] = useState(location.state?.initialStep || 1);
     //const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -253,13 +254,22 @@ const ApplicationForm = () => {
     const primaryContact = localStorage.getItem('primaryContactNumber');
     const alternativeContact = formData.contactDetails || '';
 
-    const apiData = transformRegistrationData({
-      ...formData,
-      primaryContactNumber: primaryContact,
-      contactDetails: alternativeContact
-    }, districts, mandals);
+    const apiData = transformRegistrationData(
+      {
+        ...formData,
+        primaryContactNumber: primaryContact,
+        contactDetails: alternativeContact
+      }, 
+      districts, 
+      mandals
+    );
 
+    console.log("Submitting data:", apiData); // For debugging
+    
     const response = await saveRegistration(apiData);
+    console.log("Response:", response.data);
+    
+    localStorage.setItem("applicationNo", response.data.applicationNo);
     setApplicationStatus(response.data?.applicationStatus || 'APPLICATION_SUBMITTED');
     setRegistrationId(response?.registrationId || `TH${Math.floor(100000 + Math.random() * 900000)}`);
     setSubmissionDate(new Date().toLocaleDateString('en-GB'));
@@ -274,7 +284,6 @@ const ApplicationForm = () => {
     setIsSubmitting(false);
   }
 }, [formData, districts, mandals]);
-
     const handleCreditFacilitySubmit = useCallback((e) => {
         e.preventDefault();
 

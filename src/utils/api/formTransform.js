@@ -96,44 +96,54 @@ export const transformRegistrationData = (formData, districts, mandals) => {
   const districtObj = districts.find(d => d.districtId === formData.district);
   const mandalObj = mandals.find(m => m.mandalId === formData.mandal);
 
+  // Calculate financial amounts
+  const totalAmountSanctioned = parseInt(formData.subsidyAmountSanctioned) || 0;
+  const amountReleased = parseInt(formData.subsidyAmountReleased) || 0;
+  const amountToBeReleased = Math.max(0, totalAmountSanctioned - amountReleased);
+  const requiredCreditLimit = parseInt(formData.creditRequirements) || 0;
+
+  // Contact numbers
+  const contactNumber = parseInt(localStorage.getItem('primaryContactNumber')) || 0;
+  const altContactNumber = formData.contactDetails ? parseInt(formData.contactDetails) : undefined;
+
   return {
-    enterpriseName: formData.nameEnterprise,
-    promoterName: formData.namePromoter,
-    constitution: formData.constitution,
-    productionDate: formData.dateProduction,
-    udyamRegNumber: formData.udyamRegistration,
-    contactNumber: parseInt(formData.contactDetails) || 0,
-    altContactNumber: parseInt(formData.primaryContactNumber) || 0,
-    industrialPark: formData.industrialPark,
-    state: formData.state,
+    enterpriseName: formData.nameEnterprise || '',
+    promoterName: formData.namePromoter || '',
+    constitution: formData.constitution || '',
+    productionDate: formData.dateProduction || '',
+    udyamRegNumber: formData.udyamRegistration || '',
+    contactNumber: contactNumber,
+    ...(altContactNumber && { altContactNumber }),
+    industrialPark: formData.industrialPark || '',
+    state: formData.state || '',
     district: districtObj?.districtName || '',
     mandal: mandalObj?.mandalName || '',
-    email: formData.email,
-    address: formData.address,
-    enterpriseCategory: formData.enterpriseCategory,
-    natureOfActivity: formData.natureActivity,
-    sector: formData.sector,
+    email: formData.email || '',
+    address: formData.address || '',
+    enterpriseCategory: formData.enterpriseCategory || '',
+    natureOfActivity: formData.natureActivity || '',
+    sector: formData.sector || '',
     operationStatus: formData.operationalStatus === 'operationalYes',
     operatingSatisfactorily: formData.operatingSatisfactorily || '',
     operatingDifficulties: formData.operatingDifficulties || '',
-    issueDate: formData.notOperatingSince || '',
+    issueDate: formData.operationalStatus === 'operationalNo' ? formData.notOperatingSince : null,
     reasonForNotOperating: formData.notOperatingReasons || '',
     restartSupport: formData.restartSupport || '',
     restartIntent: formData.restartIntention === 'restartYes',
     existingCredit: formData.hasCreditFacilities === 'yes',
-    creditFacilityDetails: formData.creditFacilities.map(facility => ({
-      bankName: facility.bankName,
+    creditFacilityDetails: formData.creditFacilities?.map(facility => ({
+      bankName: facility.bankName || '',
       limitSanctioned: parseInt(facility.limitSanctioned) || 0,
       outstandingAmount: parseInt(facility.outstandingAmount) || 0,
       overdueAmount: parseInt(facility.overdueAmount) || 0,
       overdueDate: facility.overdueSince || ''
-    })),
+    })) || [],
     unitStatus: formData.creditStatus || '',
-    requiredCreditLimit: parseInt(formData.creditRequirements) || 0,
+    requiredCreditLimit: requiredCreditLimit,
     investmentSubsidy: formData.investmentSubsidy === 'yes',
-    totalAmountSanctioned: parseInt(formData.subsidyAmountSanctioned) || 0,
-    amountReleased: parseInt(formData.subsidyAmountReleased) || 0,
-    amountToBeReleased: parseInt(formData.subsidyAmountToBeReleased) || 0,
+    totalAmountSanctioned: totalAmountSanctioned,
+    amountReleased: amountReleased,
+    amountToBeReleased: amountToBeReleased,
     maintainingAccountBy: formData.accountsMaintenance || '',
     helpMsg: formData.comments || '',
     status: "Assessment Completed"

@@ -28,14 +28,14 @@ const Otp = () => {
     }
 
     if (otp.length !== 6) {
-      setError("Please enter a complete 6-digit OTP");
+      setError("Please enter a 6-digit OTP");
       return false;
     }
 
-    if (otp !== DEFAULT_OTP) {
-      setError(`Incorrect OTP. Please try again`);
-      return false;
-    }
+    // if (otp !== DEFAULT_OTP) {
+    //   setError(`Incorrect OTP. Please try again`);
+    //   return false;
+    // }
 
     return true;
   }, [otp]);
@@ -57,52 +57,53 @@ const Otp = () => {
     // }
   };
 
-  const fetchRegistrationData = async (phone, token) => {
-    try {
-      const response = await axios.get(
-        `${BACKEND_URL}/registrations/mobile/no/${phone}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  };
+  const fetchRegistrationData = async (phone) => {
+  try {
+    const response = await axios.get(`${BACKEND_URL}/registrations/mobile/no/${phone}`);
+    console.log("Full API response:", response); // Add this line
+    console.log("Response data:", response.data); // Add this line
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validateOtp()) return;
+  e.preventDefault();
+  if (!validateOtp()) return;
 
-    setIsLoading(true);
-    const phone = localStorage.getItem('userPhone');
+  setIsLoading(true);
+  const phone = localStorage.getItem('userPhone');
 
-    if (!phone) {
-      setIsLoading(false);
-      setError('Phone number not found');
-      return;
-    }
+  if (!phone) {
+    setIsLoading(false);
+    setError('Phone number not found');
+    return;
+  }
 
-    try {
-      let token = getAuthToken();
-      if (!token && !(await authenticateAdmin())) return;
-      token = token || getAuthToken();
+  try {
+    const response = await fetchRegistrationData(phone);
+    
+    const navigationState = {
+      initialStep: response?.data ? 3 : 1,
+      applicationNo: response?.data?.applicationNo || '',
+      submissionDate: response?.data?.createdOn 
+        ? new Date(response.data.createdOn).toLocaleDateString('en-GB') 
+        : new Date().toLocaleDateString('en-GB'),
+      ApplicationStatus: response?.data?.applicationStatus || 'APPLICATION_SUBMITTED',
+      formData: response?.data ? { 
+        ...response.data, 
+        primaryContactNumber: phone 
+      } : { primaryContactNumber: phone }
+    };
 
-      const response = await fetchRegistrationData(phone, token);
-      const navigationState = response?.status === 200
-        ? createNavigationState(phone, response.data, 3)
-        : createNavigationState(phone, null, 1);
-
-      navigate('/ApplicationForm', { state: navigationState });
-    } catch (error) {
-      handleSubmissionError(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    navigate('/ApplicationForm', { state: navigationState });
+  } catch (error) {
+    handleSubmissionError(error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const createNavigationState = (phone, data, step) => ({
     initialStep: step,

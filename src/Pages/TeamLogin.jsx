@@ -9,6 +9,8 @@ const TeamLogin = () => {
   const navigate = useNavigate();
   const [identifier, setEmail] = useState('');
   const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false); // New state for toggle
+
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,9 +86,9 @@ const TeamLogin = () => {
                     />
                     <label htmlFor="email">Email address</label>
                   </div>
-                  <div className="form-floating mb-3">
+                  <div className="form-floating mb-3 position-relative">
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       className={`form-control ${error ? 'is-invalid' : ''}`}
                       id="password"
                       placeholder="Password"
@@ -96,6 +98,15 @@ const TeamLogin = () => {
                       required
                     />
                     <label htmlFor="password">Password</label>
+                    {/* Password toggle icon (positioned absolutely) */}
+                    <span 
+                      className="position-absolute top-50 end-0 translate-middle-y me-3"
+                      style={{ cursor: 'pointer', zIndex: 10 }}
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </span>
                     {error && <div className="invalid-feedback">{error}</div>}
                   </div>
                   <div className="d-grid mb-3">

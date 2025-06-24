@@ -3,6 +3,7 @@ import PreliminaryAssessment from '../Components/Status/PreliminaryAssessment';
  import ManagerApproval1 from '../Components/Status/ManagerApproval1';
 import UnitVisit from '../Components/Status/UnitVisit';
  import DiagnosticReport from '../Components/Status/DiagnosticReport';
+ import Header from '../Components/Status/StatusHeader';
 // import ManagerApproval2 from './ManagerApproval2';
 // import DICConcernLetter from './DICConcernLetter';
 // import RampChecklist from './RampChecklist';
@@ -14,26 +15,57 @@ import UnitVisit from '../Components/Status/UnitVisit';
 const FormWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    // Initialize all form fields here
-    nameOfFirm: 'ABC Pvt Ltd',
-    udyamNumber: 'URN00918288',
-    sizeOfUnit: 'Micro',
-    natureOfActivity: 'Manufacturing',
-    factoryLocation: {
-      district: 'Ranga Reddy',
-      mandal: 'Shadnagar',
-      address: 'Sr.No. 528, Elikatta Industrial Area, Shadnagar, Telangana 509410'
-    },
-    loansCreditFacilities: 'Yes',
-    loans: [{
-      bankName: '',
-      limitSanctioned: '',
-      outstandingAmount: '',
-      overdueAmount: '',
-      overdueSince: '09-05-2025'
-    }],
-    // ... all other initial form values
-  });
+  // Basic information
+  nameOfFirm: '',
+  promoterName: '',
+  constitution: '',
+  udyamNumber: '',
+  contactNumber: '',
+  email: '',
+  sizeOfUnit: '',
+  natureOfActivity: '',
+  sector: '',
+  
+  // Location information
+  factoryLocation: {
+    industrialPark: '',
+    state: '',
+    district: '',
+    mandal: '',
+    address: ''
+  },
+  
+  // Operation status
+  operationStatus: true,
+  operatingSatisfactorily: '',
+  operatingDifficulties: '',
+  issueDate: '',
+  reasonForNotOperating: '',
+  restartSupport: '',
+  restartIntent: true,
+  
+  // Financial information
+  loansCreditFacilities: 'No',
+  loans: [],
+  requiredCreditLimit: 0,
+  investmentSubsidy: false,
+  totalAmountSanctioned: 0,
+  amountReleased: 0,
+  amountToBeReleased: 0,
+  maintainingAccountBy: '',
+  
+  // Product information
+  gstNumber: '',
+  productType: '',
+  productUsage: '',
+  problems: '',
+  solutions: '',
+  
+  // Assessment fields
+  stressScore: '0',
+  observations: '',
+  statusUpdate: ''
+});
   
   const nextStep = () => setCurrentStep(currentStep + 1);
   const prevStep = () => setCurrentStep(currentStep - 1);
@@ -61,6 +93,7 @@ const FormWizard = () => {
 
   return (
   <>
+   <Header / >
   <div className="container-fluid pt-80">
       <section className="pt-3">
         <div className="container-fluid">

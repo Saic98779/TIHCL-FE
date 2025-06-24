@@ -13,7 +13,7 @@ const ApplicationNew = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
-  const pageSize = 4;
+  const pageSize = 5;
 
   const fetchApplications = async (page) => {
     setIsLoading(true);

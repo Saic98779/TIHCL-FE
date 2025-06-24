@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import { managerLevelOne } from '../../services/RegistrationService/RegistrationService';
-
+import  {updateApplicationStatusByManagerOne} from '../../services/RegistrationService/RegistrationService'
 function Level1() {
   const [allApplications, setAllApplications] = useState([]);
   const [displayedApplications, setDisplayedApplications] = useState([]);
@@ -18,6 +18,7 @@ function Level1() {
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  
   const pageSizeOptions = [4, 10, 25, 50, 75];
 
   useEffect(() => {
@@ -76,6 +77,7 @@ function Level1() {
 
   const handleConfirmApprove = () => {
     // API call to approve the application
+    //const response = updateApplicationStatusByManagerOne(selectedApplication.)
     console.log('Approving application:', selectedApplication);
     setShowApproveModal(false);
     setShowModal(false);
@@ -190,7 +192,7 @@ function Level1() {
                             </button>
                           </td>
                           <td>{app.dateOfSubmission || 'N/A'}</td>
-                          <td>Sufyan</td>
+                          <td>{app.executive}</td>
                           <td>13-05-2025</td>
                           <td>{app.enterpriseName || 'N/A'}</td>
                           <td>{app.promoterName || 'N/A'}</td>
@@ -293,13 +295,13 @@ function Level1() {
       <div className="col-12 col-sm-6 col-md-4 col-lg-3">
         <div className="mb-3">
           <label className="d-block fs-md fw-600 mb-1">Udyam Number</label>
-          <label className="d-block fs-md">{selectedApplication?.udyamNumber || 'N/A'}</label>
+          <label className="d-block fs-md">{selectedApplication?.udyamRegNumber || 'N/A'}</label>
         </div>
       </div>
       <div className="col-12 col-sm-6 col-md-4 col-lg-3">
         <div className="mb-3">
           <label className="d-block fs-md fw-600 mb-1">Size Of Unit</label>
-          <label className="d-block fs-md">{selectedApplication?.unitSize || 'N/A'}</label>
+          <label className="d-block fs-md">{selectedApplication?.enterpriseCategory || 'N/A'}</label>
         </div>
       </div>
       <div className="col-12 col-sm-6 col-md-4 col-lg-3">
@@ -342,48 +344,48 @@ function Level1() {
       </div>
     </div>
     
-    {selectedApplication?.hasLoans && selectedApplication?.loans?.length > 0 && (
-      <div className="mb-3">
-        <h6 className="fw-600 mb-2">Loans</h6>
-        <div className="table-responsive">
-          <table className="table table-striped table-borderless fs-md">
-            <thead className="bg-theme text-white">
-              <tr>
-                <th>S.No</th>
-                <th>Name Of Bank / Lender</th>
-                <th>Loan Amount</th>
-                <th>Since When</th>
-                <th>Approx interest paid till date</th>
-                <th>Remarks</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedApplication.loans.map((loan, index) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{loan.bankName || 'N/A'}</td>
-                  <td>{loan.amount || 'N/A'}</td>
-                  <td>{loan.sinceDate || 'N/A'}</td>
-                  <td>{loan.interestPaid || 'N/A'}</td>
-                  <td>{loan.remarks || 'N/A'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>                    
-      </div>
-    )}
+    {Array.isArray(selectedApplication?.creditFacilityDetails) && selectedApplication.creditFacilityDetails.length > 0 && (
+  <div className="mb-3">
+    <h6 className="fw-600 mb-2">Loans</h6>
+    <div className="table-responsive">
+      <table className="table table-striped table-borderless fs-md">
+        <thead className="bg-theme text-white">
+          <tr>
+            <th>S.No</th>
+            <th>Name Of Bank / Lender</th>
+            <th>Limit Sanctioned</th>
+            <th>Outstanding Amount</th>
+            <th>Overdue Amount</th>
+            <th>Overdue Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {selectedApplication.creditFacilityDetails.map((loan, index) => (
+            <tr key={index}>
+              <td>{index + 1}</td>
+              <td>{loan.bankName || 'N/A'}</td>
+              <td>{loan.limitSanctioned ?? 'N/A'}</td>
+              <td>{loan.outstandingAmount ?? 'N/A'}</td>
+              <td>{loan.overdueAmount ?? 'N/A'}</td>
+              <td>{loan.overdueDate || 'N/A'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
     
     <div className="mb-3">
       <label className="d-block fs-md fw-600 mb-1">What are your problems?</label>
       <label className="d-block fs-md">
-        {selectedApplication?.problems || 'N/A'}
+        {selectedApplication?.problemsFaced || 'N/A'}
       </label>
     </div>
     <div className="mb-3">
       <label className="d-block fs-md fw-600 mb-1">What is the expected solutions?</label>
       <label className="d-block fs-md">
-        {selectedApplication?.expectedSolutions || 'N/A'}
+        {selectedApplication?.expectedSolution || 'N/A'}
       </label>
     </div>
     <div className="mb-3">
@@ -395,7 +397,7 @@ function Level1() {
     <div className="mb-3">
       <label className="d-block fs-md fw-600 mb-1">Status Update</label>
       <label className="d-block fs-md">
-        {selectedApplication?.statusUpdate || 'N/A'}
+        {selectedApplication?.status || 'N/A'}
       </label>
     </div>
     
@@ -403,7 +405,7 @@ function Level1() {
       <div className="col-12 col-sm-6 col-md-4 col-lg-3">
         <div className="mb-3">
           <label className="d-block fs-md fw-600 mb-1">Type Of Product</label>
-          <label className="d-block fs-md">{selectedApplication?.productType || 'N/A'}</label>
+          <label className="d-block fs-md">{selectedApplication?.typeOfProduct || 'N/A'}</label>
         </div>
       </div>
       <div className="col-12 col-sm-6 col-md-4 col-lg-6">

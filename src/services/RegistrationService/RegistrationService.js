@@ -1,12 +1,20 @@
 // src/services/RegistrationService.js
 import api from '../api';
+import { getAuthToken } from '../authService/authService'; // update path as needed
 
 export const saveRegistration = async (registrationData) => {
   try {
-    const response = await api.post('/registrations/save', registrationData);
+    const token = getAuthToken();
+
+    const response = await api.post('/registrations/save', registrationData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
     return response.data;
   } catch (error) {
-    console.error('Error saving registration:', error);
+    console.error('Error saving registration:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -130,5 +138,21 @@ export const managerLevelOne = async(pageNo , pageSize)=>{
     return response.data;
   } catch (error) {
      console.log("Erroe in the manager level one api", error)
+  }
+}
+
+
+
+
+// manager one application status updating
+
+export const updateApplicationStatusByManagerOne = async (appNo) =>{
+
+  try {
+     const response  = await api.put(`/registrations/status/updation/${appNo}`)
+      console.log("response from the manager one application status updating api", response.date);
+      return response.data;
+  } catch (error) {
+      console.log('Error in updating applications status by manager one api:', error)
   }
 }

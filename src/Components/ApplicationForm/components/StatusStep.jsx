@@ -1,6 +1,11 @@
 import React, { memo } from 'react';
 import SuccessStatuImg from '../../../assets/success.png'
+import { useEffect } from 'react';
+import {logout} from '../../../services/authService/authService'
+import { useLocation } from 'react-router-dom';
 const StatusStep = memo(({ registrationId, submissionDate, ApplicationStatus }) => {
+    const applicationNo = localStorage.getItem('applicationNo')
+    const location = useLocation()
     return (
         <div className="step step-3">
             <div className="card mb-3">
@@ -19,7 +24,7 @@ const StatusStep = memo(({ registrationId, submissionDate, ApplicationStatus }) 
                                         <p className="fw-600 fs-md mb-0">Application No.</p>
                                     </div>
                                     <div>
-                                        <p className="fs-md fw-600 mb-0">{registrationId}</p>
+                                        <p className="fs-md fw-600 mb-0">{applicationNo}</p>
                                     </div>
                                 </div>
                                 <div className="d-flex align-items-center justify-content-between mb-3">

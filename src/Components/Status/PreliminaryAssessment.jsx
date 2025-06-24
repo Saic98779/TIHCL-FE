@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { preliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
 import { submitPreliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
-import{ getAllDistricts , getMandalsByDistrict} from '../../services/RegistrationService/RegistrationService'
+import { getAllDistricts, getMandalsByDistrict } from '../../services/RegistrationService/RegistrationService'
 const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const location = useLocation();
-     const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [apiError, setApiError] = useState(null);
     const [localData, setLocalData] = useState({
@@ -58,44 +58,44 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const [tempFieldValue, setTempFieldValue] = useState('');
 
 
-      // district and mandal state
-      const [districts, setDistricts] = useState([]);
-      const [mandals, setMandals] = useState([]);
-      const fetchDistricts = async () => {
-  try {
-    const response = await getAllDistricts();
-    setDistricts(response.data || []);
-  } catch (error) {
-    console.error("Error fetching districts:", error);
-    setApiError("Failed to load districts");
-  }
-};
+    // district and mandal state
+    const [districts, setDistricts] = useState([]);
+    const [mandals, setMandals] = useState([]);
+    const fetchDistricts = async () => {
+        try {
+            const response = await getAllDistricts();
+            setDistricts(response.data || []);
+        } catch (error) {
+            console.error("Error fetching districts:", error);
+            setApiError("Failed to load districts");
+        }
+    };
 
-const fetchMandals = async (districtName) => {
-  try {
-    const district = districts.find(d => d.districtName === districtName);
-    if (district) {
-      const response = await getMandalsByDistrict(district.districtId);
-      setMandals(response || []);
-    }
-  } catch (error) {
-    console.error("Error fetching mandals:", error);
-    setApiError("Failed to load mandals");
-  }
-};
+    const fetchMandals = async (districtName) => {
+        try {
+            const district = districts.find(d => d.districtName === districtName);
+            if (district) {
+                const response = await getMandalsByDistrict(district.districtId);
+                setMandals(response || []);
+            }
+        } catch (error) {
+            console.error("Error fetching mandals:", error);
+            setApiError("Failed to load mandals");
+        }
+    };
 
-useEffect(() => {
-  const fetchData = async () => {
-    await fetchDistricts();
-    
-    // Your existing fetchPreliminaryAssessment call
-    // if (location.state?.application?.registrationUsageId) {
-    //   await fetchPreliminaryAssessment(location.state.application.registrationUsageId);
-    // }
-  };
-  
-  fetchData();
-}, [location.state?.application?.registrationUsageId]);
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchDistricts();
+
+            // Your existing fetchPreliminaryAssessment call
+            // if (location.state?.application?.registrationUsageId) {
+            //   await fetchPreliminaryAssessment(location.state.application.registrationUsageId);
+            // }
+        };
+
+        fetchData();
+    }, [location.state?.application?.registrationUsageId]);
     // Stress score calculation state
     const [riskCategories, setRiskCategories] = useState(Array(10).fill(null));
 
@@ -107,7 +107,7 @@ useEffect(() => {
     const calculateStressScore = () => {
         let totalApplicableQuestions = 10;
         let totalScore = 0;
-        
+
         riskCategories.forEach((category, index) => {
             if (category && category !== "5") {
                 let scoreMap = {
@@ -156,7 +156,7 @@ useEffect(() => {
                         "4": 1    // Not Viable (1)
                     };
                 }
-                
+
                 if (scoreMap[category]) {
                     totalScore += scoreMap[category];
                 }
@@ -164,13 +164,13 @@ useEffect(() => {
                 totalApplicableQuestions -= 1;
             }
         });
-        
+
         let percentage = '0%';
         if (totalApplicableQuestions > 0) {
             const calculatedPercentage = Math.round((totalScore / (totalApplicableQuestions * 10)) * 100);
             percentage = `${calculatedPercentage}%`;
         }
-        
+
         setLocalData(prev => ({
             ...prev,
             stressScore: percentage
@@ -178,60 +178,80 @@ useEffect(() => {
     };
 
     const transformRiskCategoriesForApi = (riskCategories) => {
-  const riskQuestions = [
-    "Delay in project implementation",
-    "Production below projected level of capacity utilization",
-    "Gradual decrease of sales",
-    "Delay in payment of statutory dues",
-    "Diversion of working capital for capital expenses",
-    "Abnormal increase in creditors",
-    "SMA 2 / NPA Status of the Account",
-    "Unjustified rapid expansion without proper financial tie-up",
-    "Leverage Position",
-    "Liquidity Position"
-  ];
+        const riskQuestions = [
+            "Delay in project implementation",
+            "Production below projected level of capacity utilization",
+            "Gradual decrease of sales",
+            "Delay in payment of statutory dues",
+            "Diversion of working capital for capital expenses",
+            "Abnormal increase in creditors",
+            "SMA 2 / NPA Status of the Account",
+            "Unjustified rapid expansion without proper financial tie-up",
+            "Leverage Position",
+            "Liquidity Position"
+        ];
 
-  return riskCategories
-    .map((category, index) => {
-      if (!category || category === "5") return null;
-      
-      return {
-        issue: riskQuestions[index] || `Risk Issue ${index + 1}`,
-        riskCategorisation: category
-      };
-    })
-    .filter(Boolean);
-};
+        return riskCategories
+            .map((category, index) => {
+                if (!category || category === "5") return null;
+
+                return {
+                    issue: riskQuestions[index] || `Risk Issue ${index + 1}`,
+                    riskCategorisation: category
+                };
+            })
+            .filter(Boolean);
+    };
 
     const transformFormDataForApi = (localData) => {
-  return {
-    enterpriseName: localData.nameOfFirm,
-    udyamRegNumber: localData.udyamNumber,
-    district: localData.factoryLocation.district,
-    mandal: localData.factoryLocation.mandal,
-    address: localData.factoryLocation.address,
-    enterpriseCategory: localData.sizeOfUnit,
-    natureOfActivity: localData.natureOfActivity,
-    existingCredit: localData.loansCreditFacilities === 'Yes',
-    creditFacilityDetails: localData.loans.map(loan => ({
-      bankName: loan.bankName,
-      limitSanctioned: parseFloat(loan.limitSanctioned) || 0,
-      outstandingAmount: parseFloat(loan.outstandingAmount) || 0,
-      overdueAmount: parseFloat(loan.overdueAmount) || 0,
-      overdueDate: loan.overdueSince || ""
-    })),
-    gstNumber: localData.gstNumber,
-    typeOfProduct: localData.productType,
-    productUsage: localData.productUsage,
-    problemsFaced: localData.problems,
-    expectedSolution: localData.solutions,
-    riskCategories: transformRiskCategoriesForApi(riskCategories),
-    riskCategoryScore: parseInt(localData.stressScore.replace('%', '')) || 0,
-    observations: localData.observations,
-    status: localData.statusUpdate,
-    applicationStatus: "PRELIMINARY_ASSESSMENT" // This is the key change
-  };
-};
+        return {
+            enterpriseName: localData.nameOfFirm,
+            promoterName: localData.promoterName,
+            constitution: localData.constitution,
+            udyamRegNumber: localData.udyamNumber,
+            contactNumber: localData.contactNumber,
+            email: localData.email,
+            industrialPark: localData.factoryLocation.industrialPark,
+            state: localData.factoryLocation.state,
+            district: localData.factoryLocation.district,
+            mandal: localData.factoryLocation.mandal,
+            address: localData.factoryLocation.address,
+            enterpriseCategory: localData.sizeOfUnit,
+            natureOfActivity: localData.natureOfActivity,
+            sector: localData.sector,
+            operationStatus: localData.operationStatus,
+            operatingSatisfactorily: localData.operatingSatisfactorily,
+            operatingDifficulties: localData.operatingDifficulties,
+            reasonForNotOperating: localData.reasonForNotOperating,
+            restartSupport: localData.restartSupport,
+            restartIntent: localData.restartIntent,
+            existingCredit: localData.loansCreditFacilities === 'Yes',
+            creditFacilityDetails: localData.loans.map(loan => ({
+                bankName: loan.bankName,
+                limitSanctioned: parseFloat(loan.limitSanctioned) || 0,
+                outstandingAmount: parseFloat(loan.outstandingAmount) || 0,
+                overdueAmount: parseFloat(loan.overdueAmount) || 0,
+                overdueDate: loan.overdueSince || ""
+            })),
+            requiredCreditLimit: parseFloat(localData.requiredCreditLimit) || 0,
+            investmentSubsidy: localData.investmentSubsidy,
+            totalAmountSanctioned: parseFloat(localData.totalAmountSanctioned) || 0,
+            amountReleased: parseFloat(localData.amountReleased) || 0,
+            amountToBeReleased: parseFloat(localData.amountToBeReleased) || 0,
+            maintainingAccountBy: localData.maintainingAccountBy,
+            gstNumber: localData.gstNumber,
+            typeOfProduct: localData.productType,
+            productUsage: localData.productUsage,
+            problemsFaced: localData.problems,
+            expectedSolution: localData.solutions,
+            helpMsg: localData.helpMsg,
+            riskCategories: transformRiskCategoriesForApi(riskCategories),
+            riskCategoryScore: parseInt(localData.stressScore.replace('%', '')) || 0,
+            observations: localData.observations,
+            status: localData.statusUpdate,
+            applicationStatus: "PRELIMINARY_ASSESSMENT"
+        };
+    };
 
 
     const handleRiskCategoryChange = (index, value) => {
@@ -315,38 +335,38 @@ useEffect(() => {
         }
     };
 
-   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setSubmitError(null);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setSubmitError(null);
 
-  try {
-    const applicationNo = location.state?.application?.applicationNo || formData.applicationNo;
-    
-    if (!applicationNo) {
-      throw new Error("Application number is required");
-    }
+        try {
+            const applicationNo = location.state?.application?.applicationNo || formData.applicationNo;
 
-    // First update local form data
-    updateFormData(localData);
-    
-    // Transform the data to match API structure
-    const apiPayload = transformFormDataForApi(localData, riskCategories);
-    console.log("API Payload:", apiPayload); // For debugging
-    
-    // Then submit to API with transformed data
-    await submitPreliminaryAssessment(applicationNo, apiPayload);
-    
-    // Proceed to next step
-    nextStep();
-    
-  } catch (error) {
-    console.error("Submission error:", error);
-    setSubmitError(error.message || 'Failed to submit assessment');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+            if (!applicationNo) {
+                throw new Error("Application number is required");
+            }
+
+            // First update local form data
+            updateFormData(localData);
+
+            // Transform the data to match API structure
+            const apiPayload = transformFormDataForApi(localData, riskCategories);
+            console.log("API Payload:", apiPayload); // For debugging
+
+            // Then submit to API with transformed data
+            await submitPreliminaryAssessment(applicationNo, apiPayload);
+
+            // Proceed to next step
+            nextStep();
+
+        } catch (error) {
+            console.error("Submission error:", error);
+            setSubmitError(error.message || 'Failed to submit assessment');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleUpdateField = (fieldName) => {
         setLocalData({
@@ -427,7 +447,6 @@ useEffect(() => {
 
                 if (location.state?.application?.registrationUsageId) {
                     const response = await preliminaryAssessment(location.state.application.registrationUsageId);
-
                     const apiData = response?.data || response;
 
                     if (!apiData) {
@@ -436,20 +455,55 @@ useEffect(() => {
 
                     setLocalData(prev => ({
                         ...prev,
+                        // Basic information
                         nameOfFirm: apiData.enterpriseName || prev.nameOfFirm,
-                        udyamNumber: apiData.udyamNumber || prev.udyamNumber,
-                        sizeOfUnit: apiData.unitSize || prev.sizeOfUnit,
+                        promoterName: apiData.promoterName || prev.promoterName,
+                        constitution: apiData.constitution || prev.constitution,
+                        udyamNumber: apiData.udyamRegNumber || prev.udyamNumber,
+                        contactNumber: apiData.contactNumber || prev.contactNumber,
+                        email: apiData.email || prev.email,
+                        sizeOfUnit: apiData.enterpriseCategory || prev.sizeOfUnit,
                         natureOfActivity: apiData.natureOfActivity || prev.natureOfActivity,
+                        sector: apiData.sector || prev.sector,
+
+                        // Location information
                         factoryLocation: {
+                            industrialPark: apiData.industrialPark || prev.factoryLocation.industrialPark,
+                            state: apiData.state || prev.factoryLocation.state,
                             district: apiData.district || prev.factoryLocation.district,
                             mandal: apiData.mandal || prev.factoryLocation.mandal,
                             address: apiData.address || prev.factoryLocation.address
                         },
-                        loansCreditFacilities: apiData.hasLoans ? 'Yes' : 'No',
-                        loans: apiData.loans || prev.loans,
+
+                        // Operation status
+                        operationStatus: apiData.operationStatus !== false,
+                        operatingSatisfactorily: apiData.operatingSatisfactorily || prev.operatingSatisfactorily,
+                        operatingDifficulties: apiData.operatingDifficulties || prev.operatingDifficulties,
+                        issueDate: apiData.issueDate || prev.issueDate,
+                        reasonForNotOperating: apiData.reasonForNotOperating || prev.reasonForNotOperating,
+                        restartSupport: apiData.restartSupport || prev.restartSupport,
+                        restartIntent: apiData.restartIntent !== false,
+
+                        // Financial information
+                        loansCreditFacilities: apiData.existingCredit ? 'Yes' : 'No',
+                        loans: apiData.creditFacilityDetails || prev.loans,
+                        requiredCreditLimit: apiData.requiredCreditLimit || prev.requiredCreditLimit,
+                        investmentSubsidy: apiData.investmentSubsidy || prev.investmentSubsidy,
+                        totalAmountSanctioned: apiData.totalAmountSanctioned || prev.totalAmountSanctioned,
+                        amountReleased: apiData.amountReleased || prev.amountReleased,
+                        amountToBeReleased: apiData.amountToBeReleased || prev.amountToBeReleased,
+                        maintainingAccountBy: apiData.maintainingAccountBy || prev.maintainingAccountBy,
+
+                        // Product information
                         gstNumber: apiData.gstNumber || prev.gstNumber,
-                        productType: apiData.productType || prev.productType,
-                        productUsage: apiData.productUsage || prev.productUsage
+                        productType: apiData.typeOfProduct || prev.productType,
+                        productUsage: apiData.productUsage || prev.productUsage,
+                        problems: apiData.problemsFaced || prev.problems,
+                        solutions: apiData.expectedSolution || prev.solutions,
+
+                        // Assessment fields
+                        observations: apiData.observations || prev.observations,
+                        helpMsg: apiData.helpMsg || prev.helpMsg
                     }));
                 }
             } catch (error) {
@@ -782,8 +836,12 @@ useEffect(() => {
                                             <div className="text-start text-sm-end text-xl-end">
                                                 <button
                                                     type="button"
-                                                    className="btn btn-outline-primary btn-sm border-0 ms-3"
+                                                    className={`btn btn-sm border-0 ms-3 ${localData.loans?.length > 0 || localData.loansCreditFacilities === 'Yes'
+                                                            ? 'btn-outline-primary'
+                                                            : 'btn-outline-secondary disabled'
+                                                        }`}
                                                     onClick={() => setShowLoanModal(true)}
+                                                    disabled={!(localData.loans?.length > 0 || localData.loansCreditFacilities === 'Yes')}
                                                 >
                                                     <span className="bi bi-plus-lg"></span> Add
                                                 </button>
@@ -846,6 +904,7 @@ useEffect(() => {
                                         <div className="form-floating mb-3">
                                             <input
                                                 type="text"
+                                                required
                                                 className="form-control"
                                                 id="gst"
                                                 placeholder="GST"
@@ -922,266 +981,266 @@ useEffect(() => {
                                     </div>
                                 </div>
 
-                                 <div className="mb-3">
-                <h6 className="fs-md fw-600 mb-1">Stress Score</h6>
-                <div className="accordion mb-2">
-                    <div className="accordion-item">
-                        <h2 className="accordion-header" id="risk-headingOne">
-                            <button
-                                className="accordion-button collapsed fs-md fw-600 px-3 py-2"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#risk-collapseOne"
-                                aria-expanded="false"
-                                aria-controls="risk-collapseOne"
-                            >
-                                Score Calculation
-                            </button>
-                        </h2>
-                        <div id="risk-collapseOne" className="accordion-collapse collapse" aria-labelledby="risk-headingOne">
-                            <div className="accordion-body p-2">
-                                <div className="table-responsive">
-                                    <table className="table table-striped table-borderless mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>S.No</th>
-                                                <th>Issues / Problems</th>
-                                                <th>Probable Cause</th>
-                                                <th>Impact</th>
-                                                <th>Risk Categorisation</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="fs-md">
-                                            {/* Question 1 */}
-                                            <tr>
-    <td>1</td>
-    <td>Delay in project implementation</td>
-    <td>Wrong assessment. Lack of involvement. Delay in supply of machineries. Lack of control.</td>
-    <td>Cost over run / Time over run / diversion of funds ear maked for WC / termloan margins / Lack of WC funds for operation</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[0] || ""}
-            onChange={(e) => handleRiskCategoryChange(0, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Mild delay(2)</option>
-            <option value="2">Moderate Delay(5)</option>
-            <option value="3">Abnormal Delay(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                <div className="mb-3">
+                                    <h6 className="fs-md fw-600 mb-1">Stress Score</h6>
+                                    <div className="accordion mb-2">
+                                        <div className="accordion-item">
+                                            <h2 className="accordion-header" id="risk-headingOne">
+                                                <button
+                                                    className="accordion-button collapsed fs-md fw-600 px-3 py-2"
+                                                    type="button"
+                                                    data-bs-toggle="collapse"
+                                                    data-bs-target="#risk-collapseOne"
+                                                    aria-expanded="false"
+                                                    aria-controls="risk-collapseOne"
+                                                >
+                                                    Score Calculation
+                                                </button>
+                                            </h2>
+                                            <div id="risk-collapseOne" className="accordion-collapse collapse" aria-labelledby="risk-headingOne">
+                                                <div className="accordion-body p-2">
+                                                    <div className="table-responsive">
+                                                        <table className="table table-striped table-borderless mb-0">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>S.No</th>
+                                                                    <th>Issues / Problems</th>
+                                                                    <th>Probable Cause</th>
+                                                                    <th>Impact</th>
+                                                                    <th>Risk Categorisation</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="fs-md">
+                                                                {/* Question 1 */}
+                                                                <tr>
+                                                                    <td>1</td>
+                                                                    <td>Delay in project implementation</td>
+                                                                    <td>Wrong assessment. Lack of involvement. Delay in supply of machineries. Lack of control.</td>
+                                                                    <td>Cost over run / Time over run / diversion of funds ear maked for WC / termloan margins / Lack of WC funds for operation</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[0] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(0, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Mild delay(2)</option>
+                                                                            <option value="2">Moderate Delay(5)</option>
+                                                                            <option value="3">Abnormal Delay(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 2 */}
-<tr>
-    <td>2</td>
-    <td>Production below projected level of capacity utilization</td>
-    <td>Absence of expert operators. Lack of raw materials. Improper factory setup. Power/labour problems. Lack of demand.</td>
-    <td>Lack of required WC funds to meet the operations / Low cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[1] || ""}
-            onChange={(e) => handleRiskCategoryChange(1, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Temporarily(2)</option>
-            <option value="2">Frequently(6)</option>
-            <option value="3">Permanently(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 2 */}
+                                                                <tr>
+                                                                    <td>2</td>
+                                                                    <td>Production below projected level of capacity utilization</td>
+                                                                    <td>Absence of expert operators. Lack of raw materials. Improper factory setup. Power/labour problems. Lack of demand.</td>
+                                                                    <td>Lack of required WC funds to meet the operations / Low cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[1] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(1, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Temporarily(2)</option>
+                                                                            <option value="2">Frequently(6)</option>
+                                                                            <option value="3">Permanently(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 3 */}
-<tr>
-    <td>3</td>
-    <td>Gradual decrease of sales</td>
-    <td>Diversion of fund. Nonrealization of Book Debts. Lack of concentration on Marketing. Production bottleneck. Mismanagement. Poor quality. Increased competition.</td>
-    <td>Low cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[2] || ""}
-            onChange={(e) => handleRiskCategoryChange(2, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Fair Chance to increase (4)</option>
-            <option value="2">Moderate Chance to increase (6)</option>
-            <option value="3">Bleak Chance(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 3 */}
+                                                                <tr>
+                                                                    <td>3</td>
+                                                                    <td>Gradual decrease of sales</td>
+                                                                    <td>Diversion of fund. Nonrealization of Book Debts. Lack of concentration on Marketing. Production bottleneck. Mismanagement. Poor quality. Increased competition.</td>
+                                                                    <td>Low cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[2] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(2, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Fair Chance to increase (4)</option>
+                                                                            <option value="2">Moderate Chance to increase (6)</option>
+                                                                            <option value="3">Bleak Chance(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 4 */}
-<tr>
-    <td>4</td>
-    <td>Delay in payment of statutory dues</td>
-    <td>Casual in nature. Lack of sufficient cash-flow / cash flow mismatches.</td>
-    <td>Haulting production</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[3] || ""}
-            onChange={(e) => handleRiskCategoryChange(3, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Temporary cash flow mismatches(4)</option>
-            <option value="2">Cash Flow mismatches coupled with diversion of funds(6)</option>
-            <option value="3">Mis-utilization of cash flows and major diversions(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 4 */}
+                                                                <tr>
+                                                                    <td>4</td>
+                                                                    <td>Delay in payment of statutory dues</td>
+                                                                    <td>Casual in nature. Lack of sufficient cash-flow / cash flow mismatches.</td>
+                                                                    <td>Haulting production</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[3] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(3, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Temporary cash flow mismatches(4)</option>
+                                                                            <option value="2">Cash Flow mismatches coupled with diversion of funds(6)</option>
+                                                                            <option value="3">Mis-utilization of cash flows and major diversions(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 5 */}
-<tr>
-    <td>5</td>
-    <td>Diversion of working capital for capital expenses</td>
-    <td>May be for urgent settlement. Inadequate internal accrual. Lack of planning. May be a deliberate act.</td>
-    <td>Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[4] || ""}
-            onChange={(e) => handleRiskCategoryChange(4, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Diversion with definite source of resources to rebuild working capital in a specific timeline(5)</option>
-            <option value="2">Diversion without identified source to rebuild the working capital(8)</option>
-            <option value="3">Permanent diversion(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 5 */}
+                                                                <tr>
+                                                                    <td>5</td>
+                                                                    <td>Diversion of working capital for capital expenses</td>
+                                                                    <td>May be for urgent settlement. Inadequate internal accrual. Lack of planning. May be a deliberate act.</td>
+                                                                    <td>Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[4] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(4, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Diversion with definite source of resources to rebuild working capital in a specific timeline(5)</option>
+                                                                            <option value="2">Diversion without identified source to rebuild the working capital(8)</option>
+                                                                            <option value="3">Permanent diversion(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 6 */}
-<tr>
-    <td>6</td>
-    <td>Abnormal increase in creditors</td>
-    <td>Suppliers trying to dump the product. Lack of production planning. Inadequate cash flow. Diversion of funds. Overtrading. Non realisation of Trade recivables within the contacted credit period. Decline in demand</td>
-    <td>Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[5] || ""}
-            onChange={(e) => handleRiskCategoryChange(5, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Temporary phenomena due to unforeseen Internal(2)</option>
-            <option value="2">External factors, with definite timeline for correction(6)</option>
-            <option value="3">Issues related to production, marketing, temporary diversion of funds, which require considerable time to correct (10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 6 */}
+                                                                <tr>
+                                                                    <td>6</td>
+                                                                    <td>Abnormal increase in creditors</td>
+                                                                    <td>Suppliers trying to dump the product. Lack of production planning. Inadequate cash flow. Diversion of funds. Overtrading. Non realisation of Trade recivables within the contacted credit period. Decline in demand</td>
+                                                                    <td>Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[5] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(5, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Temporary phenomena due to unforeseen Internal(2)</option>
+                                                                            <option value="2">External factors, with definite timeline for correction(6)</option>
+                                                                            <option value="3">Issues related to production, marketing, temporary diversion of funds, which require considerable time to correct (10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 7 */}
-<tr>
-    <td>7</td>
-    <td>SMA 2 / NPA Status of the Account</td>
-    <td>Stress, Incipient sickness or sickness of the Unit.</td>
-    <td>Seaing of the unit / Iniate recovery procedure / Winding of the unit</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[6] || ""}
-            onChange={(e) => handleRiskCategoryChange(6, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">SMA 1/2/3 (2)</option>
-            <option value="2">Soft NPA (6)</option>
-            <option value="3">Hard NPA(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 7 */}
+                                                                <tr>
+                                                                    <td>7</td>
+                                                                    <td>SMA 2 / NPA Status of the Account</td>
+                                                                    <td>Stress, Incipient sickness or sickness of the Unit.</td>
+                                                                    <td>Seaing of the unit / Iniate recovery procedure / Winding of the unit</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[6] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(6, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">SMA 1/2/3 (2)</option>
+                                                                            <option value="2">Soft NPA (6)</option>
+                                                                            <option value="3">Hard NPA(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 8 */}
-<tr>
-    <td>8</td>
-    <td>Unjustified rapid expansion without proper financial tie-up</td>
-    <td>To have better market share. Improper planning.</td>
-    <td>Diversion of funds / Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[7] || ""}
-            onChange={(e) => handleRiskCategoryChange(7, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Non-significant(2)</option>
-            <option value="2">Significant(6)</option>
-            <option value="3">Serious(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 8 */}
+                                                                <tr>
+                                                                    <td>8</td>
+                                                                    <td>Unjustified rapid expansion without proper financial tie-up</td>
+                                                                    <td>To have better market share. Improper planning.</td>
+                                                                    <td>Diversion of funds / Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[7] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(7, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Non-significant(2)</option>
+                                                                            <option value="2">Significant(6)</option>
+                                                                            <option value="3">Serious(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 9 */}
-<tr>
-    <td>9</td>
-    <td>Leverage Position</td>
-    <td></td>
-    <td>Long term lqiudity issues / Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[8] || ""}
-            onChange={(e) => handleRiskCategoryChange(8, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Non-significant(2)</option>
-            <option value="2">Significant(6)</option>
-            <option value="3">Serious(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
+                                                                {/* Question 9 */}
+                                                                <tr>
+                                                                    <td>9</td>
+                                                                    <td>Leverage Position</td>
+                                                                    <td></td>
+                                                                    <td>Long term lqiudity issues / Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[8] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(8, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Non-significant(2)</option>
+                                                                            <option value="2">Significant(6)</option>
+                                                                            <option value="3">Serious(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
 
-{/* Question 10 */}
-<tr>
-    <td>10</td>
-    <td>Liquidity Position</td>
-    <td></td>
-    <td>Short term lqiudity issues/ Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
-    <td>
-        <select 
-            className="form-select"
-            value={riskCategories[9] || ""}
-            onChange={(e) => handleRiskCategoryChange(9, e.target.value)}
-        >
-            <option value="">Select Categorisation</option>
-            <option value="1">Non-significant(2)</option>
-            <option value="2">Significant(6)</option>
-            <option value="3">Serious(10)</option>
-            <option value="4">Not Viable (1)</option>
-            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
-        </select>
-    </td>
-</tr>
-                                        </tbody>
-                                    </table>
+                                                                {/* Question 10 */}
+                                                                <tr>
+                                                                    <td>10</td>
+                                                                    <td>Liquidity Position</td>
+                                                                    <td></td>
+                                                                    <td>Short term lqiudity issues/ Low capacity ulitization / declain in cashflow- unable to operate / Unable to meet overheads / cashflow mismatch / unable to make repayments to Banks/Fis / Account is out of order.</td>
+                                                                    <td>
+                                                                        <select
+                                                                            className="form-select"
+                                                                            value={riskCategories[9] || ""}
+                                                                            onChange={(e) => handleRiskCategoryChange(9, e.target.value)}
+                                                                        >
+                                                                            <option value="">Select Categorisation</option>
+                                                                            <option value="1">Non-significant(2)</option>
+                                                                            <option value="2">Significant(6)</option>
+                                                                            <option value="3">Serious(10)</option>
+                                                                            <option value="4">Not Viable (1)</option>
+                                                                            <option value="5">Not Applicable (0 & this question should be removed from calculation of score)</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-end">
+                                        <p className="badge bg-dark rounded-pill fs-md mb-0">Total Score: <span>{localData.stressScore}</span></p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="text-end">
-                    <p className="badge bg-dark rounded-pill fs-md mb-0">Total Score: <span>{localData.stressScore}</span></p>
-                </div>
-            </div>
 
                                 <div className="mb-3">
                                     <label className="fs-md fw-600 mb-1">Observations</label>
@@ -1456,108 +1515,108 @@ useEffect(() => {
                     )}
 
                     {showFactoryLocationModal && (
-  <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-    <div className="modal-dialog modal-dialog-scrollable modal-dialog-centered">
-      <div className="modal-content border">
-        <div className="modal-header py-2 bg-primary">
-          <h6 className="modal-title text-white">Update Factory Location</h6>
-          <button
-            type="button"
-            className="btn-close text-white fs-4 p-0"
-            onClick={() => setShowFactoryLocationModal(false)}
-          >
-            <span className="bi bi-x"></span>
-          </button>
-        </div>
-        <div className="modal-body">
-          <form>
-            <div className="row">
-              <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
-                <div className="mb-3">
-                  <label htmlFor="district" className="form-label">District</label>
-                  <select
-                    className="form-select"
-                    id="district"
-                    value={tempFieldValue.district}
-                    onChange={(e) => {
-                      const selectedDistrict = e.target.value;
-                      setTempFieldValue({
-                        ...tempFieldValue,
-                        district: selectedDistrict,
-                        mandal: '' // Reset mandal when district changes
-                      });
-                      fetchMandals(selectedDistrict);
-                    }}
-                  >
-                    <option value="">Select District</option>
-                    {districts.map((district) => (
-                      <option key={district.districtId} value={district.districtName}>
-                        {district.districtName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
-                <div className="mb-3">
-                  <label htmlFor="mandal" className="form-label">Mandal</label>
-                  <select
-                    className="form-select"
-                    id="mandal"
-                    value={tempFieldValue.mandal}
-                    onChange={(e) => setTempFieldValue({
-                      ...tempFieldValue,
-                      mandal: e.target.value
-                    })}
-                    disabled={!tempFieldValue.district || mandals.length === 0}
-                  >
-                    <option value="">Select Mandal</option>
-                    {mandals.map((mandal) => (
-                      <option key={mandal.mandalId} value={mandal.mandalName}>
-                        {mandal.mandalName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-12">
-                <div className="form-floating mb-3">
-                  <textarea
-                    className="form-control"
-                    id="address"
-                    placeholder=""
-                    value={tempFieldValue.address}
-                    onChange={(e) => setTempFieldValue({
-                      ...tempFieldValue,
-                      address: e.target.value
-                    })}
-                  ></textarea>
-                  <label htmlFor="address">Address</label>
-                </div>
-              </div>
-            </div>
-          </form>
-          <div className="text-end">
-            <button
-              type="button"
-              className="btn btn-secondary me-2"
-              onClick={() => setShowFactoryLocationModal(false)}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => handleUpdateField('factoryLocation')}
-            >
-              Update
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
+                        <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                            <div className="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+                                <div className="modal-content border">
+                                    <div className="modal-header py-2 bg-primary">
+                                        <h6 className="modal-title text-white">Update Factory Location</h6>
+                                        <button
+                                            type="button"
+                                            className="btn-close text-white fs-4 p-0"
+                                            onClick={() => setShowFactoryLocationModal(false)}
+                                        >
+                                            <span className="bi bi-x"></span>
+                                        </button>
+                                    </div>
+                                    <div className="modal-body">
+                                        <form>
+                                            <div className="row">
+                                                <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                                                    <div className="mb-3">
+                                                        <label htmlFor="district" className="form-label">District</label>
+                                                        <select
+                                                            className="form-select"
+                                                            id="district"
+                                                            value={tempFieldValue.district}
+                                                            onChange={(e) => {
+                                                                const selectedDistrict = e.target.value;
+                                                                setTempFieldValue({
+                                                                    ...tempFieldValue,
+                                                                    district: selectedDistrict,
+                                                                    mandal: '' // Reset mandal when district changes
+                                                                });
+                                                                fetchMandals(selectedDistrict);
+                                                            }}
+                                                        >
+                                                            <option value="">Select District</option>
+                                                            {districts.map((district) => (
+                                                                <option key={district.districtId} value={district.districtName}>
+                                                                    {district.districtName}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                                                    <div className="mb-3">
+                                                        <label htmlFor="mandal" className="form-label">Mandal</label>
+                                                        <select
+                                                            className="form-select"
+                                                            id="mandal"
+                                                            value={tempFieldValue.mandal}
+                                                            onChange={(e) => setTempFieldValue({
+                                                                ...tempFieldValue,
+                                                                mandal: e.target.value
+                                                            })}
+                                                            disabled={!tempFieldValue.district || mandals.length === 0}
+                                                        >
+                                                            <option value="">Select Mandal</option>
+                                                            {mandals.map((mandal) => (
+                                                                <option key={mandal.mandalId} value={mandal.mandalName}>
+                                                                    {mandal.mandalName}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-12">
+                                                    <div className="form-floating mb-3">
+                                                        <textarea
+                                                            className="form-control"
+                                                            id="address"
+                                                            placeholder=""
+                                                            value={tempFieldValue.address}
+                                                            onChange={(e) => setTempFieldValue({
+                                                                ...tempFieldValue,
+                                                                address: e.target.value
+                                                            })}
+                                                        ></textarea>
+                                                        <label htmlFor="address">Address</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <div className="text-end">
+                                            <button
+                                                type="button"
+                                                className="btn btn-secondary me-2"
+                                                onClick={() => setShowFactoryLocationModal(false)}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-primary"
+                                                onClick={() => handleUpdateField('factoryLocation')}
+                                            >
+                                                Update
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {showCreditModal && (
                         <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
