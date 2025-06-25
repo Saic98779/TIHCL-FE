@@ -59,15 +59,15 @@ export const getMandalsByDistrict = async (districtId) => {
   }
 };
 
+export const NewApplication = async (pageNo = 1, pageSize = 10) => {
 
-
-export const NewApplication = async (pageNo = 1, pageSize = 4) => {
+  console.log("pageNO:",)
   try {
     const response = await api.get('/registrations/new/applications', {
-      // params: {
-      //   pageSize ,
-      //   pageNo
-      // }
+      params: {
+        pageSize ,
+        pageNo
+      }
     });
    console.log("response from applications " , response.data)
     // Assuming response.data contains:
@@ -132,14 +132,21 @@ export const submitPreliminaryAssessment = async (applicationNo, assessmentData)
 
 
 // manager level1 
-export const managerLevelOne = async(pageNo , pageSize)=>{
+export const managerLevelOne = async (pageNo = 0, pageSize = 10) => {
   try {
-    const response= await api.get(`/registrations/status?status=${"PRELIMINARY_ASSESSMENT"}`)
+    const response = await api.get(`/registrations/status`, {
+      params: {
+        status: "PRELIMINARY_ASSESSMENT",
+        pageNo,
+        pageSize
+      }
+    });
     return response.data;
   } catch (error) {
-     console.log("Erroe in the manager level one api", error)
+    console.error("Error in managerLevelOne:", error);
+    throw error;
   }
-}
+};
 
 
 

@@ -21,7 +21,7 @@ const ApplicationPending = () => {
     console.log("Full API response:", res); // Debug log
     
     // Access the data directly from the API response structure
-    const data = Array.isArray(res?.content) ? res.content : [];
+    const data = Array.isArray(res?.data) ? res.data : [];
     const totalElements = res?.totalElements || 0;
 
     setApplications(data);

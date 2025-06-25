@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { submitPreliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
-
+import success from '../../assets/pending.gif'
 const ManagerApproval1 = ({ formData, nextStep, prevStep }) => {
   const status = formData?.managerApproval1?.status || 'pending';
   const rejectionReason = formData?.managerApproval1?.rejectionReason || '';
@@ -53,7 +53,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep }) => {
             <div className="col-12 col-sm-12 col-md-8 offset-lg-2 col-lg-6 offset-lg-3">
               {status === 'pending' && (
                 <div className="d-flex align-items-center justify-content-center flex-column mb-3">
-                  <img src="assets/img/pending.gif" className="img-fluid" alt="pending" width="200" />
+                  <img src={success} className="img-fluid" alt="pending" width="200" />
                   <h3 className="text-warning">Pending</h3>
                 </div>
               )}
@@ -71,22 +71,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep }) => {
                 </div>
               )}
 
-              <div className="text-center mt-4">
-                <button
-                  className="btn btn-primary"
-                  onClick={handleViewDetails}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Loading...
-                    </>
-                  ) : (
-                    'View Details'
-                  )}
-                </button>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -210,6 +195,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep }) => {
         className="previous btn btn-secondary float-start"
         value="Previous"
         onClick={prevStep}
+        disabled
       />
       <input
         type="button"

@@ -61,7 +61,7 @@ export const transformFormDataForApi = (formData, riskCategories) => {
     const getStatusText = () => {
         return formData.statusUpdate === 'consider' 
             ? 'application can be consider' 
-            : 'appication can notbe cosider';
+            : 'appication can not be cosider';
     };
 
     return {
@@ -93,8 +93,11 @@ export const transformFormDataForApi = (formData, riskCategories) => {
 
 export const transformRegistrationData = (formData, districts, mandals) => {
   // Find district and mandal names from IDs
-  const districtObj = districts.find(d => d.districtId === formData.district);
-  const mandalObj = mandals.find(m => m.mandalId === formData.mandal);
+  const districtObj = districts.find(d => d.districtId == formData.district); // Use loose equality
+  const mandalObj = mandals.find(m => m.mandalId == formData.mandal); // Use loose equality
+  
+  console.log("District Object:", districtObj);
+  console.log("Mandal Object:", mandalObj);
 
   // Calculate financial amounts
   const totalAmountSanctioned = parseInt(formData.subsidyAmountSanctioned) || 0;
@@ -116,8 +119,8 @@ export const transformRegistrationData = (formData, districts, mandals) => {
     ...(altContactNumber && { altContactNumber }),
     industrialPark: formData.industrialPark || '',
     state: formData.state || '',
-    district: districtObj?.districtName || '',
-    mandal: mandalObj?.mandalName || '',
+    district: districtObj?.districtName || formData.district || '', // Fallback to ID if name not found
+    mandal: mandalObj?.mandalName || formData.mandal || '', // Fallback to ID if name not found
     email: formData.email || '',
     address: formData.address || '',
     enterpriseCategory: formData.enterpriseCategory || '',

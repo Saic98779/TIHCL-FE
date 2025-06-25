@@ -13,15 +13,15 @@ const ApplicationNew = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
 
-  const pageSize = 5;
+  const pageSize = 10;
 
   const fetchApplications = async (page) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const res = await NewApplication(page, pageSize);
-      const data = Array.isArray(res?.content) ? res.content : [];
+      const res = await NewApplication(page-1, pageSize);
+      const data = Array.isArray(res?.data) ? res.data : [];
       setApplications(data);
       setTotalItems(res.totalElements || 0);
     } catch (err) {

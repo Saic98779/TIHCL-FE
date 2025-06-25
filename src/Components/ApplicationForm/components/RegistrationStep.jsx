@@ -10,31 +10,32 @@ const RegistrationStep = memo(({
     mandals = [],
     isLoadingDistricts,
     isLoadingMandals }) => {
-
+    
     // Modify the onChange handler to store names instead of IDs
-   const handleDistrictChange = (e) => {
-    const districtId = e.target.value;
-    onChange({
-        target: {
-            name: 'district',
-            value: districtId // Store the ID directly
-        }
-    });
-};
+    const handleDistrictChange = (e) => {
+        const districtId = e.target.value;
+       
+        onChange({
+            target: {
+                name: 'district',
+                value: districtId // Store the ID directly
+            }
+        });
+    };
 
     const handleMandalChange = (e) => {
-    const mandalId = e.target.value;
-    onChange({
-        target: {
-            name: 'mandal',
-            value: mandalId // Store the ID directly
-        }
-    });
-};
+        const mandalId = e.target.value;
+        onChange({
+            target: {
+                name: 'mandal',
+                value: mandalId // Store the ID directly
+            }
+        });
+    };
 
     // Find the current selected IDs for the dropdowns
-   const selectedDistrictId = formData.district || '';
-const selectedMandalId = formData.mandal || '';
+    const selectedDistrictId = formData.district || '';
+    const selectedMandalId = formData.mandal || '';
     return (
         <div className="step step-1">
             <div className="card">
@@ -55,7 +56,7 @@ const selectedMandalId = formData.mandal || '';
                                     onChange={onChange}
                                     onBlur={onBlur}
                                 />
-                                <label htmlFor="nameEnterprise" className='text-dark'>Name of the Enterprise</label>
+                                <label htmlFor="nameEnterprise" className='text-dark'>Name of the Enterprise <span className='text-danger text-end'>*</span></label>
                                 {errors.nameEnterprise &&
                                     <div className="invalid-feedback">{errors.nameEnterprise}</div>}
                             </div>
@@ -73,7 +74,7 @@ const selectedMandalId = formData.mandal || '';
                                     onChange={onChange}
                                     onBlur={onBlur}
                                 />
-                                <label htmlFor="namePromoter" className='text-dark'>Name of the Promoter</label>
+                                <label htmlFor="namePromoter" className='text-dark'>Name of the Promoter <span className='text-danger text-end'>*</span> </label>
                                 {errors.namePromoter &&
                                     <div className="invalid-feedback">{errors.namePromoter}</div>}
                             </div>
@@ -95,7 +96,7 @@ const selectedMandalId = formData.mandal || '';
                                     <option value="LLP">LLP</option>
                                     <option value="Limited Company">Limited Company</option>
                                 </select>
-                                <label htmlFor="constitution" className='text-dark'>Constitution</label>
+                                <label htmlFor="constitution" className='text-dark'>Constitution <span className='text-danger text-end'>*</span> </label>
                                 {errors.constitution &&
                                     <div className="invalid-feedback">{errors.constitution}</div>}
                             </div>
@@ -113,7 +114,7 @@ const selectedMandalId = formData.mandal || '';
                                     onBlur={onBlur}
                                     max={new Date(new Date().setDate(new Date().getDate() - 1)).toISOString().split('T')[0]}
                                 />
-                                <label htmlFor="dateProduction" className='text-dark'>Date of Commencement Production</label>
+                                <label htmlFor="dateProduction" className='text-dark'>Date of Commencement Production <span className='text-danger text-end'>*</span> </label>
                                 {errors.dateProduction &&
                                     <div className="invalid-feedback">{errors.dateProduction}</div>}
                             </div>
@@ -131,7 +132,7 @@ const selectedMandalId = formData.mandal || '';
                                     onChange={onChange}
                                     onBlur={onBlur}
                                 />
-                                <label htmlFor="udyamRegistration" className='text-dark'>Udyam Registration Number</label>
+                                <label htmlFor="udyamRegistration" className='text-dark'>Udyam Registration Number <span className='text-danger text-end'>*</span> </label>
                                 {errors.udyamRegistration &&
                                     <div className="invalid-feedback">{errors.udyamRegistration}</div>}
                             </div>
@@ -158,7 +159,7 @@ const selectedMandalId = formData.mandal || '';
                         <div className="col-12 col-sm-6 col-md-4 col-lg-3">
                             <div className="form-floating mb-3">
                                 <input
-                                    type="text"
+                                    type="email"
                                     className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                                     id="email"
                                     name="email"
@@ -166,6 +167,7 @@ const selectedMandalId = formData.mandal || '';
                                     value={formData.email}
                                     onChange={onChange}
                                     onBlur={onBlur}
+                                    
                                 />
                                 <label htmlFor="email" className='text-dark'>Email Id</label>
                                 {errors.email &&
@@ -186,7 +188,7 @@ const selectedMandalId = formData.mandal || '';
                                     <option value="">Select Industrial Park</option>
                                     <option value="Industrial Park 1">Industrial Park 1</option>
                                 </select>
-                                <label htmlFor="industrialPark">Industrial Park</label>
+                                <label htmlFor="industrialPark">Industrial Park <span className='text-danger text-end'>*</span> </label>
                                 {errors.industrialPark &&
                                     <div className="invalid-feedback">{errors.industrialPark}</div>}
                             </div>
@@ -208,7 +210,7 @@ const selectedMandalId = formData.mandal || '';
                                     <option value="Telangana">Telangana</option>
                                     <option value="Other">Other</option>
                                 </select>
-                                <label htmlFor="state">State</label>
+                                <label htmlFor="state">State <span className='text-danger text-end'>*</span> </label>
                                 {errors.state &&
                                     <div className="invalid-feedback">{errors.state}</div>}
                             </div>
@@ -216,58 +218,58 @@ const selectedMandalId = formData.mandal || '';
 
 
                         {/* District Field */}
-<div className="col-12 col-sm-6 col-md-4 col-lg-3">
-  <div className="form-floating mb-3">
-    <select
-      className={`form-select ${errors.district ? 'is-invalid' : ''}`}
-      id="district"
-      name="district"
-      value={selectedDistrictId}
-      onChange={handleDistrictChange}
-      onBlur={onBlur}
-      required
-      disabled={isLoadingDistricts}
-    >
-      <option value="">Select District</option>
-      {districts.map(district => (
-        <option key={district.districtId} value={district.districtId}>
-          {district.districtName}
-        </option>
-      ))}
-    </select>
-    <label htmlFor="district">District</label>
-    {errors.district && (
-      <div className="invalid-feedback">{errors.district}</div>
-    )}
-  </div>
-</div>
+                        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+                            <div className="form-floating mb-3">
+                                <select
+                                    className={`form-select ${errors.district ? 'is-invalid' : ''}`}
+                                    id="district"
+                                    name={"district"}
+                                    value={selectedDistrictId}
+                                    onChange={handleDistrictChange}
+                                    onBlur={onBlur}
+                                    required
+                                    disabled={isLoadingDistricts}
+                                >
+                                    <option value="">Select District</option>
+                                    {districts.map(district => (
+                                        <option key={district.districtId} value={district.districtId}>
+                                            {district.districtName}
+                                        </option>
+                                    ))}
+                                </select>
+                                <label htmlFor="district">District <span className='text-danger text-end'>*</span> </label>
+                                {errors.district && (
+                                    <div className="invalid-feedback">{errors.district}</div>
+                                )}
+                            </div>
+                        </div>
 
-{/* Mandal Field */}
-<div className="col-12 col-sm-6 col-md-4 col-lg-3">
-  <div className="form-floating mb-3">
-    <select
-      className={`form-select ${errors.mandal ? 'is-invalid' : ''}`}
-      id="mandal"
-      name="mandal"
-      value={selectedMandalId}
-      onChange={handleMandalChange}
-      onBlur={onBlur}
-      required
-      disabled={!formData.district || isLoadingMandals}
-    >
-      <option value="">Select Mandal</option>
-      {mandals.map(mandal => (
-        <option key={mandal.mandalId} value={mandal.mandalId}>
-          {mandal.mandalName}
-        </option>
-      ))}
-    </select>
-    <label htmlFor="mandal">Mandal</label>
-    {errors.mandal && (
-      <div className="invalid-feedback">{errors.mandal}</div>
-    )}
-  </div>
-</div>
+                        {/* Mandal Field */}
+                        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
+                            <div className="form-floating mb-3">
+                                <select
+                                    className={`form-select ${errors.mandal ? 'is-invalid' : ''}`}
+                                    id="mandal"
+                                    name="mandal"
+                                    value={selectedMandalId}
+                                    onChange={handleMandalChange}
+                                    onBlur={onBlur}
+                                    required
+                                    disabled={!formData.district || isLoadingMandals}
+                                >
+                                    <option value="">Select Mandal</option>
+                                    {mandals.map(mandal => (
+                                        <option key={mandal.mandalId} value={mandal.mandalId}>
+                                            {mandal.mandalName}
+                                        </option>
+                                    ))}
+                                </select>
+                                <label htmlFor="mandal">Mandal <span className='text-danger text-end'>*</span> </label>
+                                {errors.mandal && (
+                                    <div className="invalid-feedback">{errors.mandal}</div>
+                                )}
+                            </div>
+                        </div>
 
                         <div className="col-12 col-sm-6 col-md-4 col-lg-3">
                             <div className="form-floating mb-3">
@@ -281,7 +283,7 @@ const selectedMandalId = formData.mandal || '';
                                     onChange={onChange}
                                     onBlur={onBlur}
                                 />
-                                <label htmlFor="address" className='text-dark'>Address</label>
+                                <label htmlFor="address" className='text-dark'>Address <span className='text-danger text-end'>*</span> </label>
                                 {errors.address &&
                                     <div className="invalid-feedback">{errors.address}</div>}
                             </div>
@@ -295,17 +297,20 @@ const selectedMandalId = formData.mandal || '';
                             type="button"
                             className="btn btn-primary"
                             onClick={onNext}
-                            disabled={Object.keys(errors).some(key =>
-                                ['nameEnterprise', 'namePromoter', 'constitution',
-                                    'dateProduction', 'udyamRegistration', 'contactDetails',
-                                    'state', 'industrialPark', 'district', 'mandal',
-                                    'address', 'email'].includes(key) && errors[key]
-                            )}
+                            disabled={
+                                [
+                                    'nameEnterprise', 'namePromoter', 'constitution',
+                                    'dateProduction', 'udyamRegistration', 'state',
+                                    'industrialPark', 'district', 'mandal',
+                                    'address',  // remove 'contactDetails' if it's optional
+                                ].some(field => !formData[field]?.trim() || errors[field])
+                            }
                         >
                             Next
                             <span className="bi bi-arrow-right ms-2"></span>
                         </button>
                     </div>
+
                 </div>
             </div>
         </div>

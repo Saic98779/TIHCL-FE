@@ -1,13 +1,13 @@
 import React, { memo } from 'react';
 
-const ApplicationStep = memo(({ 
-    formData, 
-    errors, 
-    onChange, 
-    onRadioChange, 
-    onBlur, 
-    onPrev, 
-    onSubmit, 
+const ApplicationStep = memo(({
+    formData,
+    errors,
+    onChange,
+    onRadioChange,
+    onBlur,
+    onPrev,
+    onSubmit,
     onAddCredit,
     isSubmitting,
     submitError
@@ -23,7 +23,7 @@ const ApplicationStep = memo(({
                         {/* Enterprise Category */}
                         <div className="col-12 col-sm-12 col-md-6 col-lg-4">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Enterprise category?</label>
+                                <label className="form-label fs-md fw-600 mb-1">Enterprise category? <span className='text-danger text-end'>*</span></label>
                                 {errors.enterpriseCategory && (
                                     <div className="text-danger small">{errors.enterpriseCategory}</div>
                                 )}
@@ -52,7 +52,7 @@ const ApplicationStep = memo(({
                         {/* Nature of Activity */}
                         <div className="col-12 col-sm-12 col-md-6 col-lg-4">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Nature of activity?</label>
+                                <label className="form-label fs-md fw-600 mb-1">Nature of activity? <span className='text-danger text-end'>*</span> </label>
                                 {errors.natureActivity && (
                                     <div className="text-danger small">{errors.natureActivity}</div>
                                 )}
@@ -93,7 +93,7 @@ const ApplicationStep = memo(({
                                     <option value="Group">Group</option>
                                     <option value="Division">Division</option>
                                 </select>
-                                <label htmlFor="sector">Sector</label>
+                                <label htmlFor="sector">Sector <span className='text-danger text-end fw-bold'>*</span></label>
                                 {errors.sector && (
                                     <div className="invalid-feedback">{errors.sector}</div>
                                 )}
@@ -105,7 +105,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Operational Status of the unit</label>
+                                <label className="form-label fs-md fw-600 mb-1">Operational Status of the unit <span className='text-danger text-end'>*</span></label>
                                 {errors.operationalStatus && (
                                     <div className="text-danger small">{errors.operationalStatus}</div>
                                 )}
@@ -283,7 +283,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Existing Credit with facilities with bank/NBFC/FI & SFC ?</label>
+                                <label className="form-label fs-md fw-600 mb-1">Existing Credit with facilities with bank/NBFC/FI & SFC ? <span className='text-danger'>*</span></label>
                                 {errors.hasCreditFacilities && (
                                     <div className="text-danger small">{errors.hasCreditFacilities}</div>
                                 )}
@@ -333,16 +333,16 @@ const ApplicationStep = memo(({
                                         </button>
                                     </div>
                                     {formData.creditFacilities.length > 0 ? (
-                                        <div className="table-responsive">
-                                            <table className="table table-bordered fs-md">
+                                        <div className="table-responsive ">
+                                            <table className="table table-bordered fs-md ">
                                                 <thead className="bg-theme text-white">
                                                     <tr>
-                                                        <th>S.No</th>
-                                                        <th>Bank/FIs Name</th>
-                                                        <th>Limit sanctioned (In Rs)</th>
-                                                        <th>Outstanding Amount (In Rs)</th>
-                                                        <th>Overdue Amount (In Rs)</th>
-                                                        <th>Overdue Since (Date)</th>
+                                                        <th className='bg-primary text-white fw-bold'>S.No</th>
+                                                        <th className='bg-primary text-white fw-bold'>Bank/FIs Name</th>
+                                                        <th className='bg-primary text-white fw-bold'>Limit sanctioned (In Rs)</th>
+                                                        <th className='bg-primary text-white fw-bold'>Outstanding Amount (In Rs)</th>
+                                                        <th className='bg-primary text-white fw-bold'>Overdue Amount (In Rs)</th>
+                                                        <th className='bg-primary text-white fw-bold'>Overdue Since (Date)</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -366,7 +366,7 @@ const ApplicationStep = memo(({
                                     )}
 
                                     <div className="mt-3">
-                                        <label className="form-label fs-md fw-600 mb-1">Status of the credit</label>
+                                        <label className="form-label fs-md fw-600 mb-1">Status of the credit <span className='text-danger'>*</span></label>
                                         {errors.creditStatus && (
                                             <div className="text-danger small">{errors.creditStatus}</div>
                                         )}
@@ -422,7 +422,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Investment Subsidy / other incentives Sanctioned Govt</label>
+                                <label className="form-label fs-md fw-600 mb-1">Investment Subsidy / other incentives Sanctioned Govt <span className='text-danger'>*</span></label>
                                 {errors.investmentSubsidy && (
                                     <div className="text-danger small">{errors.investmentSubsidy}</div>
                                 )}
@@ -525,7 +525,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">How do you maintain your books of accounts?</label>
+                                <label className="form-label fs-md fw-600 mb-1">How do you maintain your books of accounts? <span className='text-danger'>*</span></label>
                                 {errors.accountsMaintenance && (
                                     <div className="text-danger small">{errors.accountsMaintenance}</div>
                                 )}
@@ -588,7 +588,12 @@ const ApplicationStep = memo(({
                             type="button"
                             className="btn btn-primary"
                             onClick={onSubmit}
-                            disabled={isSubmitting}
+                            disabled={
+                                ![
+                                    'enterpriseCategory', 'natureActivity', 'sector', 'operationalStatus',
+                                    'accountsMaintenance', 'hasCreditFacilities', 'investmentSubsidy'
+                                ].every(field => formData[field]?.toString().trim() && !errors[field])
+                            }
                         >
                             {isSubmitting ? (
                                 <>
@@ -603,7 +608,7 @@ const ApplicationStep = memo(({
                             )}
                         </button>
                     </div>
-                    
+
                     {submitError && (
                         <div className="alert alert-danger mt-3">
                             <strong>Error:</strong> {submitError}

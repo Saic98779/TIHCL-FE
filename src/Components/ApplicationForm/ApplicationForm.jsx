@@ -58,6 +58,7 @@ const ApplicationForm = () => {
         comments: ''
     });
     const [districts, setDistricts] = useState([]);
+    
     const [mandals, setMandals] = useState([]);
     const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
     const [isLoadingMandals, setIsLoadingMandals] = useState(false);

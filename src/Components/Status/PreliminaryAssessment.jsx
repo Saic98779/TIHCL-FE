@@ -735,10 +735,20 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <label className="fs-md fw-600">Factory Location</label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
-                                            <div className="fs-md">
-                                                <div>{localData.factoryLocation.district}</div>
-                                                <div>{localData.factoryLocation.mandal}</div>
-                                                <div>{localData.factoryLocation.address}</div>
+                                            <div className="fs-md d-flex justify-content-between">
+                                                
+                                                <div>
+                                                    <strong>District</strong><br />
+                                                    {localData.factoryLocation.district}
+                                                </div>
+                                                <div>
+                                                    <strong>Mandal</strong><br />
+                                                    {localData.factoryLocation.mandal}
+                                                </div>
+                                                <div>
+                                                    <strong>address</strong><br />
+                                                    {localData.factoryLocation.address}
+                                                </div>
                                             </div>
                                             {confirmedFields.factoryLocation && (
                                                 <span className="text-success ms-2">
@@ -853,14 +863,15 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                         <table className="table table-striped table-borderless fs-md">
                                             <thead className="bg-theme text-white">
                                                 <tr>
-                                                    <th>S.No</th>
-                                                    <th>Bank/Fis Name</th>
-                                                    <th>Limit sanctioned (In Rs)</th>
-                                                    <th>Outstanding Amount (In Rs)</th>
-                                                    <th>Overdue Amount (In Rs)</th>
-                                                    <th>Overdue Since (Date)</th>
-                                                    <th>Action</th>
+                                                    <th className='bg-primary text-white fw-bold'>S.No</th>
+                                                    <th className='bg-primary text-white fw-bold'>Bank/Fis Name</th>
+                                                    <th className='bg-primary text-white fw-bold'>Limit sanctioned (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold'>Outstanding Amount (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold'>Overdue Amount (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold'>Overdue Since (Date)</th>
+                                                    <th className='bg-primary text-white fw-bold'>Action</th>
                                                 </tr>
+                                                 
                                             </thead>
                                             <tbody>
                                                 {localData.loans.map((loan, index) => (

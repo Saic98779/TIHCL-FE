@@ -21,45 +21,26 @@ function Level1() {
   
   const pageSizeOptions = [4, 10, 25, 50, 75];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await managerLevelOne(currentPage, pageSize);
-        console.log("API Response:", response);
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await managerLevelOne(currentPage - 1, pageSize); // Note: pageNo is 0-based in API
+      
+      setDisplayedApplications(response.data || []);
+      setTotalPages(response.totalPages || 1);
+      setTotalItems(response.totalElements || 0);
+      
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+      setDisplayedApplications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        if (response.content && Array.isArray(response.content)) {
-          setAllApplications(response.content);
-          setTotalPages(response.totalPages || 1);
-          setTotalItems(response.totalElements || response.content.length);
-
-          if (response.content.length > pageSize) {
-            const startIdx = (currentPage - 1) * pageSize;
-            const endIdx = startIdx + pageSize;
-            setDisplayedApplications(response.content.slice(startIdx, endIdx));
-          } else {
-            setDisplayedApplications(response.content);
-          }
-        } else {
-          console.log('Unexpected response format', response);
-          setAllApplications([]);
-          setDisplayedApplications([]);
-          setTotalPages(1);
-          setTotalItems(0);
-        }
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-        setAllApplications([]);
-        setDisplayedApplications([]);
-        setTotalPages(1);
-        setTotalItems(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [currentPage, pageSize]);
+  fetchData();
+}, [currentPage, pageSize]);
 
   const handleViewApplication = (app) => {
     setSelectedApplication(app);

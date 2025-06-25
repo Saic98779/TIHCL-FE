@@ -32,11 +32,15 @@ export const validateField = (name, value, formData) => {
              }
              break;
 
-        // case 'contactDetails':
-        //     if (!value) error = 'Contact details are required';
-        //     else if (!/^[0-9]\d{9}$/.test(value)) error = 'Invalid Indian phone number';
-        //     break;
-
+       case 'contactDetails':
+    if (value) {
+        if (!/^[5-9]/.test(value)) {
+            error = 'Invalid mobile number';
+        } else if (value.length !== 10) {
+            error = 'Phone number must be 10 digits';
+        }
+    }
+    break;
          case 'state':
         case 'industrialPark':
          case 'district':
@@ -49,10 +53,12 @@ export const validateField = (name, value, formData) => {
             else if (value.length < 5) error = 'Address too short (min 10 chars)';
             break;
 
-        // case 'email':
-        //     if (!value) error = 'Email is required';
-        //     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
-        //     break;
+        case 'email':
+              if(value){
+                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
+                 break;
+              }
+            
 
         case 'enterpriseCategory':
             if (!value) error = 'Please select enterprise category';
@@ -66,8 +72,18 @@ export const validateField = (name, value, formData) => {
             if (!value) error = 'Please select sector';
             break;
 
+        
+
         case 'operationalStatus':
             if (!value) error = 'Please select operational status';
+            break;
+            
+        case 'hasCreditFacilities':
+            if (!value) error = 'Please select hasCreditFacilities';
+            break;
+
+        case 'investmentSubsidy':
+            if (!value) error = 'Please select investmentSubsidy';
             break;
 
         case 'notOperatingSince':
@@ -159,7 +175,7 @@ export const validateStep = (step, formData, setErrors) => {
     if (step === 2) {
         const step2Fields = [
             'enterpriseCategory', 'natureActivity', 'sector', 'operationalStatus',
-            'accountsMaintenance'
+            'accountsMaintenance','hasCreditFacilities','investmentSubsidy'
         ];
 
         step2Fields.forEach(field => {

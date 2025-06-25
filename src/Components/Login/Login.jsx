@@ -27,8 +27,8 @@ const Login = () => {
       return false;
     }
 
-    if (!/^[5-9]/.test(phone)) {
-      setError('Phone number must start with 5, 6, 7, 8 or 9');
+    if (!/^[6-9]/.test(phone)) {
+      setError('invalid mobile number ');
       return false;
     }
 

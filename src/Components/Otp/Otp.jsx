@@ -27,7 +27,7 @@ const Otp = () => {
       return false;
     }
 
-    if (otp.length !== 6) {
+    if (otp.length !== 6 || otp.length >6) {
       setError("Please enter a 6-digit OTP");
       return false;
     }
@@ -40,11 +40,11 @@ const Otp = () => {
     return true;
   }, [otp]);
 
-  useEffect(() => {
-    if (otp.length === 6) {
-      validateOtp();
-    }
-  }, [otp, validateOtp]);
+  // useEffect(() => {
+  //   if (otp.length === 6) {
+  //     validateOtp();
+  //   }
+  // }, [otp, validateOtp]);
 
   const authenticateAdmin = async () => {
     // try {
@@ -70,7 +70,11 @@ const Otp = () => {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  if (!validateOtp()) return;
+
+   if (otp !== DEFAULT_OTP) {
+      setError(`Incorrect OTP. Please try again`);
+      return false;
+    }
 
   setIsLoading(true);
   const phone = localStorage.getItem('userPhone');
@@ -198,7 +202,7 @@ const Otp = () => {
                     <button
                       type="submit"
                       className="btn btn-primary w-100"
-                      disabled={otp !== DEFAULT_OTP || isLoading}
+                      disabled={otp.length !== DEFAULT_OTP.length || isLoading}
                     >
                       {isLoading ? (
                         <>
