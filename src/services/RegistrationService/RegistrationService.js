@@ -61,7 +61,6 @@ export const getMandalsByDistrict = async (districtId) => {
 
 export const NewApplication = async (pageNo = 1, pageSize = 10) => {
 
-  console.log("pageNO:",)
   try {
     const response = await api.get('/registrations/new/applications', {
       params: {
@@ -69,7 +68,6 @@ export const NewApplication = async (pageNo = 1, pageSize = 10) => {
         pageNo
       }
     });
-   console.log("response from applications " , response.data)
     // Assuming response.data contains:
     // {
     //   data: [array of applications],

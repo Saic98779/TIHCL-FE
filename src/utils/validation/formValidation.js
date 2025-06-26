@@ -27,14 +27,14 @@ export const validateField = (name, value, formData) => {
          case 'udyamRegistration':
              if (!value) {
                  error = 'Udyam registration is required';
-             } else if (!/^(UDYAM|udyam)-[A-Za-z]{2}-[0-9]{2}-[0-9]{7}$/.test(value)) {
-                error = 'You Entered Invalid format Correct Format is (UDYAM-AZ-00-1234567 or UDYAM-az-00-1234567)';
-             }
+             } else if (!/^udyam-[a-z]{2}-[0-9]{2}-[0-9]{7}$/i.test(value)) {
+  error = 'Invalid format. Correct Format: UDYAM-XX-00-1234567 OR udyam-xx-12-1234567' ;
+}
              break;
 
        case 'contactDetails':
     if (value) {
-        if (!/^[5-9]/.test(value)) {
+        if (!/^[6-9]/.test(value)) {
             error = 'Invalid mobile number';
         } else if (value.length !== 10) {
             error = 'Phone number must be 10 digits';
@@ -56,9 +56,9 @@ export const validateField = (name, value, formData) => {
         case 'email':
               if(value){
                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
-                 break;
+                 
               }
-            
+            break;
 
         case 'enterpriseCategory':
             if (!value) error = 'Please select enterprise category';
@@ -94,7 +94,7 @@ export const validateField = (name, value, formData) => {
         case 'notOperatingReasons':
             if (formData.operationalStatus === 'operationalNo' && !value.trim())
                 error = 'Reasons are required when not operational';
-            else if (value && value.length < 20) error = 'Please provide more details (min 20 chars)';
+            // else if (value && value.length < 20) error = 'Please provide more details (min 20 chars)';
             break;
 
         case 'restartIntention':
@@ -141,9 +141,11 @@ export const validateField = (name, value, formData) => {
             if (!value) error = 'Please select how you maintain accounts';
             break;
 
-        case 'comments':
-            if (value && value.length < 10) error = 'Please provide more details (min 10 chars)';
-            break;
+        // case 'comments':
+        //     if (value && value.length < 10) error = 'Please provide more details (min 10 chars)';
+        //     break;
+               
+
 
         default:
             break;

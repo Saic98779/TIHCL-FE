@@ -59,7 +59,7 @@ const Login = () => {
           userId: response.data.userId,
           identifiers: response.data.identifiers,
           role: response.data.userRole,
-          UserName: response.data.userName
+          username: response.data.username
         }));
         localStorage.setItem('userPhone', phone);
         localStorage.setItem('primaryContactNumber', phone);

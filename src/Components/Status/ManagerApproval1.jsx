@@ -54,7 +54,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep }) => {
               {status === 'pending' && (
                 <div className="d-flex align-items-center justify-content-center flex-column mb-3">
                   <img src={success} className="img-fluid" alt="pending" width="200" />
-                  <h3 className="text-warning">Pending</h3>
+                  <h3 className="text-warning">Waiting for Manager Approval</h3>
                 </div>
               )}
               {status === 'approved' && (

@@ -2,13 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { preliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
 import { submitPreliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
-import { getAllDistricts, getMandalsByDistrict } from '../../services/RegistrationService/RegistrationService'
+import { getAllDistricts, getMandalsByDistrict } from '../../services/RegistrationService/RegistrationService';
+
 const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const location = useLocation();
+    const [formSubmitted, setFormSubmitted] = useState(false);
+     const [touchedFields, setTouchedFields] = useState({
+  observations: false,
+  statusUpdate: false,
+  riskAssessment: false
+});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const [btndisable, setBtnDisable] = useState(true);
+    const [errors, setErrors] = useState({
+        gstNumber: '',
+        stressScore: '',
+        observations: '',
+        statusUpdate: ''
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [apiError, setApiError] = useState(null);
+
     const [localData, setLocalData] = useState({
         nameOfFirm: formData.nameOfFirm || '',
         udyamNumber: formData.udyamNumber || '',
@@ -47,6 +62,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const [showFactoryLocationModal, setShowFactoryLocationModal] = useState(false);
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [showLoanModal, setShowLoanModal] = useState(false);
+
     const [newLoan, setNewLoan] = useState({
         bankName: '',
         limitSanctioned: '',
@@ -57,10 +73,11 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const [editingLoanIndex, setEditingLoanIndex] = useState(null);
     const [tempFieldValue, setTempFieldValue] = useState('');
 
-
-    // district and mandal state
     const [districts, setDistricts] = useState([]);
     const [mandals, setMandals] = useState([]);
+    const [riskCategories, setRiskCategories] = useState(Array(10).fill(null));
+
+    // Fetch districts
     const fetchDistricts = async () => {
         try {
             const response = await getAllDistricts();
@@ -71,6 +88,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
         }
     };
 
+    // Fetch mandals based on district
     const fetchMandals = async (districtName) => {
         try {
             const district = districts.find(d => d.districtName === districtName);
@@ -84,27 +102,19 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
         }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            await fetchDistricts();
-
-            // Your existing fetchPreliminaryAssessment call
-            // if (location.state?.application?.registrationUsageId) {
-            //   await fetchPreliminaryAssessment(location.state.application.registrationUsageId);
-            // }
-        };
-
-        fetchData();
-    }, [location.state?.application?.registrationUsageId]);
-    // Stress score calculation state
-    const [riskCategories, setRiskCategories] = useState(Array(10).fill(null));
-
-    // Calculate stress score when risk categories change
-    useEffect(() => {
-        calculateStressScore();
-    }, [riskCategories]);
-
+    // Calculate stress score
     const calculateStressScore = () => {
+  const unansweredQuestions = riskCategories.filter(cat => !cat).length;
+  if (unansweredQuestions > 0) {
+    if (touchedFields.riskAssessment || formSubmitted) {
+      setErrors(prev => ({
+        ...prev,
+        stressScore: 'Please answer all risk assessment questions'
+      }));
+    }
+    return;
+  }
+
         let totalApplicableQuestions = 10;
         let totalScore = 0;
 
@@ -175,8 +185,13 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
             ...prev,
             stressScore: percentage
         }));
-    };
 
+        // Clear stress score error if calculation succeeds
+        setErrors(prev => ({
+            ...prev,
+            stressScore: ''
+        }));
+    };
     const transformRiskCategoriesForApi = (riskCategories) => {
         const riskQuestions = [
             "Delay in project implementation",
@@ -255,10 +270,11 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
 
     const handleRiskCategoryChange = (index, value) => {
-        const newCategories = [...riskCategories];
-        newCategories[index] = value;
-        setRiskCategories(newCategories);
-    };
+  const newCategories = [...riskCategories];
+  newCategories[index] = value;
+  setRiskCategories(newCategories);
+  setTouchedFields(prev => ({ ...prev, riskAssessment: true }));
+};
 
     const handleConfirmField = (fieldName) => {
         setConfirmedFields({
@@ -301,13 +317,17 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setLocalData({
-            ...localData,
-            [name]: type === 'radio' ? value : (type === 'checkbox' ? checked : value)
-        });
-    };
+  const { name, value, type, checked } = e.target;
+  setLocalData({
+    ...localData,
+    [name]: type === 'radio' ? value : (type === 'checkbox' ? checked : value)
+  });
 
+  // Mark field as touched when changed
+  if (name === 'observations' || name === 'statusUpdate') {
+    setTouchedFields(prev => ({ ...prev, [name]: true }));
+  }
+};
     const handleLoanChange = (e) => {
         const { name, value } = e.target;
         setNewLoan({
@@ -336,7 +356,33 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+  e.preventDefault();
+  setFormSubmitted(true);
+  
+  // Force all fields to be considered touched on submit
+  setTouchedFields({
+    observations: true,
+    statusUpdate: true,
+    riskAssessment: true
+  });
+
+  // Run validation checks
+  const gstError = validateGST(localData.gstNumber, true);
+  const observationsError = !localData.observations.trim() ? 'Observations are required' : '';
+  const statusError = !localData.statusUpdate ? 'Please select a status' : '';
+  const stressScoreError = localData.stressScore === '0%' ? 'Please complete the risk assessment' : '';
+
+  setErrors({
+    gstNumber: gstError,
+    observations: observationsError,
+    statusUpdate: statusError,
+    stressScore: stressScoreError
+  });
+        // Check if form is valid
+        if (gstError || observationsError || statusError || stressScoreError) {
+            return;
+        }
+
         setIsSubmitting(true);
         setSubmitError(null);
 
@@ -520,6 +566,76 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
         fetchPreliminaryAssessment();
     }, [location.state?.application?.registrationUsageId, formData]);
 
+
+
+    const validateGST = (gstNumber, checkSubmitted = true) => {
+        if (!checkSubmitted || formSubmitted) {
+            if (!gstNumber.trim()) {
+                return 'GST Number is required';
+            } else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gstNumber)) {
+                return 'Invalid GST Number format';
+            }
+        }
+        return '';
+    };
+
+    const handleValidation = (e) => {
+        const { name, value } = e.target;
+
+        if (name === 'gstNumber') {
+            const error = validateGST(value, formSubmitted);
+            setErrors(prev => ({
+                ...prev,
+                gstNumber: error
+            }));
+        }
+    };
+
+    const isFormValid = () => {
+        // Check confirmed fields
+        const requiredConfirmedFields = [
+            'nameOfFirm',
+            'udyamNumber',
+            'sizeOfUnit',
+            'natureOfActivity',
+            'factoryLocation',
+            'loansCreditFacilities'
+        ];
+
+        const allConfirmed = requiredConfirmedFields.every(field => confirmedFields[field]);
+        if (!allConfirmed) return false;
+
+        // Check other required fields
+        const gstError = validateGST(localData.gstNumber, false);
+        if (gstError) return false;
+
+        if (!localData.observations.trim()) return false;
+        if (!localData.statusUpdate) return false;
+
+        // Check stress score
+        if (localData.stressScore === '0%') return false;
+
+        return true;
+    };
+    // Update button disabled state when form data changes
+    useEffect(() => {
+        setBtnDisable(!isFormValid());
+    }, [localData, confirmedFields, riskCategories]);
+
+    // Calculate stress score when risk categories change
+    useEffect(() => {
+        calculateStressScore();
+    }, [riskCategories]);
+
+    // Initial data fetch
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchDistricts();
+        };
+
+        fetchData();
+    }, [location.state?.application?.registrationUsageId]);
+
     return (
         <fieldset>
             {isLoading && (
@@ -544,7 +660,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Name Of Firm</label>
+                                            <label className="fs-md fw-600">Name Of Firm <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-6 col-xl-4">
                                             <label className="fs-md">{localData.nameOfFirm}</label>
@@ -591,7 +707,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Udyam Number</label>
+                                            <label className="fs-md fw-600">Udyam Number <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <label className="fs-md">{localData.udyamNumber}</label>
@@ -638,7 +754,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Size of Unit</label>
+                                            <label className="fs-md fw-600">Size of Unit <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <label className="fs-md">{localData.sizeOfUnit}</label>
@@ -685,7 +801,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Nature of Activity</label>
+                                            <label className="fs-md fw-600">Nature of Activity <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <label className="fs-md">{localData.natureOfActivity}</label>
@@ -732,11 +848,11 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Factory Location</label>
+                                            <label className="fs-md fw-600">Factory Location <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <div className="fs-md d-flex justify-content-between">
-                                                
+
                                                 <div>
                                                     <strong>District</strong><br />
                                                     {localData.factoryLocation.district}
@@ -793,7 +909,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
-                                            <label className="fs-md fw-600">Loans/Credit Facilities</label>
+                                            <label className="fs-md fw-600">Loans/Credit Facilities <span className='text-danger'>*</span></label>
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <label className="fs-md">{localData.loansCreditFacilities}</label>
@@ -847,8 +963,8 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                 <button
                                                     type="button"
                                                     className={`btn btn-sm border-0 ms-3 ${localData.loans?.length > 0 || localData.loansCreditFacilities === 'Yes'
-                                                            ? 'btn-outline-primary'
-                                                            : 'btn-outline-secondary disabled'
+                                                        ? 'btn-outline-primary'
+                                                        : 'btn-outline-secondary disabled'
                                                         }`}
                                                     onClick={() => setShowLoanModal(true)}
                                                     disabled={!(localData.loans?.length > 0 || localData.loansCreditFacilities === 'Yes')}
@@ -871,7 +987,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     <th className='bg-primary text-white fw-bold'>Overdue Since (Date)</th>
                                                     <th className='bg-primary text-white fw-bold'>Action</th>
                                                 </tr>
-                                                 
+
                                             </thead>
                                             <tbody>
                                                 {localData.loans.map((loan, index) => (
@@ -909,6 +1025,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                             </ul>
 
                             {/* Additional Form Fields */}
+                            {/* GST Number Field with validation */}
                             <div className="row">
                                 <div className="col-12 col-sm-6 col-md-4 col-lg-4 col-xl-4">
                                     <div className="mb-3">
@@ -916,14 +1033,18 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <input
                                                 type="text"
                                                 required
-                                                className="form-control"
+                                                className={`form-control ${errors.gstNumber ? 'is-invalid' : ''}`}
                                                 id="gst"
                                                 placeholder="GST"
                                                 name="gstNumber"
                                                 value={localData.gstNumber}
                                                 onChange={handleChange}
+                                                onBlur={handleValidation}
                                             />
-                                            <label htmlFor="gst">GST Number</label>
+                                            <label htmlFor="gst">GST Number <span className='text-danger'>*</span></label>
+                                            {errors.gstNumber && (
+                                                <div className="invalid-feedback">{errors.gstNumber}</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -941,6 +1062,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                 name="productType"
                                                 value={localData.productType}
                                                 onChange={handleChange}
+
                                             />
                                             <label htmlFor="product">Type Of Product</label>
                                         </div>
@@ -993,7 +1115,10 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 </div>
 
                                 <div className="mb-3">
-                                    <h6 className="fs-md fw-600 mb-1">Stress Score</h6>
+                                    <h6 className="fs-md fw-600 mb-1">Stress Score <span className='text-danger'>*</span></h6>
+                                    {errors.stressScore && (touchedFields.riskAssessment || formSubmitted) && (
+  <div className="alert alert-danger">{errors.stressScore}</div>
+)}
                                     <div className="accordion mb-2">
                                         <div className="accordion-item">
                                             <h2 className="accordion-header" id="risk-headingOne">
@@ -1249,62 +1374,84 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                         </div>
                                     </div>
                                     <div className="text-end">
-                                        <p className="badge bg-dark rounded-pill fs-md mb-0">Total Score: <span>{localData.stressScore}</span></p>
+                                        <p className="badge bg-dark rounded-pill fs-md mb-0">
+                                            Total Score: <span>{localData.stressScore}</span>
+                                        </p>
                                     </div>
                                 </div>
 
+                                {/* Observations Field */}
+                               <div className="mb-3">
+  <label className="fs-md fw-600 mb-1">Observations <span className='text-danger'>*</span></label>
+  <textarea
+    className={`form-control ${
+      (touchedFields.observations || formSubmitted) && !localData.observations.trim() 
+        ? 'is-invalid' 
+        : ''
+    }`}
+    rows="3"
+    placeholder="Write here"
+    name="observations"
+    value={localData.observations}
+    onChange={handleChange}
+    onBlur={() => setTouchedFields(prev => ({ ...prev, observations: true }))}
+  ></textarea>
+  {(touchedFields.observations || formSubmitted) && !localData.observations.trim() && (
+    <div className="invalid-feedback">Observations are required</div>
+  )}
+</div>
+                                {/* Status Update Field */}
                                 <div className="mb-3">
-                                    <label className="fs-md fw-600 mb-1">Observations</label>
-                                    <div>
-                                        <textarea
-                                            className="form-control"
-                                            rows="3"
-                                            placeholder="Write here"
-                                            name="observations"
-                                            value={localData.observations}
-                                            onChange={handleChange}
-                                        ></textarea>
-                                    </div>
-                                </div>
-                                <div className="mb-3">
-                                    <label className="fs-md fw-600 mb-1">Status Update</label>
-                                    <div className="mb-2">
-                                        <div className="form-check form-check-inline">
-                                            <input
-                                                className="form-check-input"
-                                                type="radio"
-                                                name="statusUpdate"
-                                                id="consider"
-                                                value="consider"
-                                                checked={localData.statusUpdate === 'consider'}
-                                                onChange={handleChange}
-                                            />
-                                            <label className="form-check-label fs-md" htmlFor="consider">Application can be considered</label>
-                                        </div>
-                                        <div className="form-check form-check-inline">
-                                            <input
-                                                className="form-check-input"
-                                                type="radio"
-                                                name="statusUpdate"
-                                                id="notconsider"
-                                                value="notconsider"
-                                                checked={localData.statusUpdate === 'notconsider'}
-                                                onChange={handleChange}
-                                            />
-                                            <label className="form-check-label fs-md" htmlFor="notconsider">Application cannot be considered</label>
-                                        </div>
-                                    </div>
-                                </div>
+  <label className="fs-md fw-600 mb-1">Status Update <span className='text-danger'>*</span></label>
+  <div className="mb-2">
+    <div className="form-check form-check-inline">
+      <input
+        className="form-check-input"
+        type="radio"
+        name="statusUpdate"
+        id="consider"
+        value="consider"
+        checked={localData.statusUpdate === 'consider'}
+        onChange={handleChange}
+        onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
+      />
+      <label className="form-check-label fs-md" htmlFor="consider">
+        Application can be considered
+      </label>
+    </div>
+    <div className="form-check form-check-inline">
+      <input
+        className="form-check-input"
+        type="radio"
+        name="statusUpdate"
+        id="notconsider"
+        value="notconsider"
+        checked={localData.statusUpdate === 'notconsider'}
+        onChange={handleChange}
+        onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
+      />
+      <label className="form-check-label fs-md" htmlFor="notconsider">
+        Application cannot be considered
+      </label>
+    </div>
+  </div>
+  {(touchedFields.statusUpdate || formSubmitted) && !localData.statusUpdate && (
+    <div className="text-danger">Please select a status</div>
+  )}
+</div>
+
                             </div>
                         </div>
                     </div>
 
+                    {/* Submit Button */}
                     <input
                         type="button"
                         name="next"
                         className="next btn btn-primary float-end"
                         value="Submit for Manager Approval"
                         onClick={handleSubmit}
+                        disabled={btndisable || isSubmitting}
                     />
 
                     {/* Modals */}

@@ -31,7 +31,7 @@ const TeamLogin = () => {
       password
     });
 
-    const { token, userRole, userId } = response.data;
+    const { token, userRole, userId ,username } = response.data;
 
     if (!token) throw new Error('Authentication failed');
 
@@ -39,7 +39,8 @@ const TeamLogin = () => {
     localStorage.setItem('userData', JSON.stringify({
       userId,
       identifier,
-      role: userRole
+      role: userRole,
+      username: username
     }));
 
     // Convert role to uppercase for consistent comparison

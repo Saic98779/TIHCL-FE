@@ -87,7 +87,6 @@ const ApplicationForm = () => {
     }, []);
 
 
-
     // / Fetch mandals when district changes
     useEffect(() => {
         if (formData.district) {

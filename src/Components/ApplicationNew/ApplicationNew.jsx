@@ -72,7 +72,6 @@ const ApplicationNew = () => {
           <div className="card-header bg-theme text-white d-flex justify-content-between align-items-center">
             <h6 className="mb-0">New Applications</h6>
           </div>
-
           <div className="card-body">
             {isLoading ? (
               <div className="text-center py-4">
@@ -115,6 +114,7 @@ const ApplicationNew = () => {
                             >
                               Select
                             </button>
+                            
                           </td>
                         </tr>
                       ))}
