@@ -96,9 +96,6 @@ export const transformRegistrationData = (formData, districts, mandals) => {
   const districtObj = districts.find(d => d.districtId == formData.district); // Use loose equality
   const mandalObj = mandals.find(m => m.mandalId == formData.mandal); // Use loose equality
   
-  console.log("District Object:", districtObj);
-  console.log("Mandal Object:", mandalObj);
-
   // Calculate financial amounts
   const totalAmountSanctioned = parseInt(formData.subsidyAmountSanctioned) || 0;
   const amountReleased = parseInt(formData.subsidyAmountReleased) || 0;
@@ -109,6 +106,14 @@ export const transformRegistrationData = (formData, districts, mandals) => {
   const contactNumber = parseInt(localStorage.getItem('primaryContactNumber')) || 0;
   const altContactNumber = formData.contactDetails ? parseInt(formData.contactDetails) : undefined;
 
+  // Handle operatingDifficulties as array
+  let operatingDifficultiesArray = [];
+  if (formData.operatingDifficulties) {
+    operatingDifficultiesArray = Array.isArray(formData.operatingDifficulties) 
+      ? formData.operatingDifficulties 
+      : formData.operatingDifficulties.split(', ');
+  }
+
   return {
     enterpriseName: formData.nameEnterprise || '',
     promoterName: formData.namePromoter || '',
@@ -118,17 +123,19 @@ export const transformRegistrationData = (formData, districts, mandals) => {
     contactNumber: contactNumber,
     ...(altContactNumber && { altContactNumber }),
     industrialPark: formData.industrialPark || '',
-    state: formData.state || '',
-    district: districtObj?.districtName || formData.district || '', // Fallback to ID if name not found
-    mandal: mandalObj?.mandalName || formData.mandal || '', // Fallback to ID if name not found
+    state: formData.state || 'Telangana',
+    district: districtObj?.districtName || formData.district || '',
+    mandal: mandalObj?.mandalName || formData.mandal || '',
     email: formData.email || '',
     address: formData.address || '',
     enterpriseCategory: formData.enterpriseCategory || '',
     natureOfActivity: formData.natureActivity || '',
     sector: formData.sector || '',
     operationStatus: formData.operationalStatus === 'operationalYes',
-    operatingSatisfactorily: formData.operatingSatisfactorily || '',
-    operatingDifficulties: formData.operatingDifficulties || '',
+    operatingSatisfactorily: formData.operationalStatus === 'operationalYes' 
+      ? formData.operatingSatisfactorily === 'yes' 
+      : null,
+    operatingDifficulties: operatingDifficultiesArray, // Send as array
     issueDate: formData.operationalStatus === 'operationalNo' ? formData.notOperatingSince : null,
     reasonForNotOperating: formData.notOperatingReasons || '',
     restartSupport: formData.restartSupport || '',
@@ -139,7 +146,8 @@ export const transformRegistrationData = (formData, districts, mandals) => {
       limitSanctioned: parseInt(facility.limitSanctioned) || 0,
       outstandingAmount: parseInt(facility.outstandingAmount) || 0,
       overdueAmount: parseInt(facility.overdueAmount) || 0,
-      overdueDate: facility.overdueSince || ''
+      overdueDate: facility.overdueSince || '',
+      natureOfLoan: facility.natureOfLoan || '' // Add this line
     })) || [],
     unitStatus: formData.creditStatus || '',
     requiredCreditLimit: requiredCreditLimit,

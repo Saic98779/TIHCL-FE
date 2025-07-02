@@ -20,7 +20,7 @@ import logo from '../../assets/tihcl-logo.png';
 
 const ApplicationForm = () => {
     const location = useLocation();
-    
+    console.log("location data", location)
     const [currentStep, setCurrentStep] = useState(location.state?.initialStep || 1);
     //const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -48,6 +48,8 @@ const ApplicationForm = () => {
         restartSupport: '',
         hasCreditFacilities: '', // Added this field to track the credit facilities question
         creditFacilities: [],
+        editingCreditIndex: null, // for edit mode
+
         creditStatus: '',
         creditRequirements: '',
         investmentSubsidy: '',
@@ -56,9 +58,11 @@ const ApplicationForm = () => {
         subsidyAmountToBeReleased: '',
         accountsMaintenance: '',
         comments: ''
+
     });
+    //console.log(formData.creditStatus)
     const [districts, setDistricts] = useState([]);
-    
+
     const [mandals, setMandals] = useState([]);
     const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
     const [isLoadingMandals, setIsLoadingMandals] = useState(false);
@@ -118,13 +122,14 @@ const ApplicationForm = () => {
         limitSanctioned: '',
         outstandingAmount: '',
         overdueAmount: '',
-        overdueSince: ''
+        overdueSince: '',
+        natureOfLoan: ''
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     //const [registrationId, setRegistrationId] = useState('');
     //const [submissionDate, setSubmissionDate] = useState('');
-    const [registrationId, setRegistrationId] = useState(location.state?.registrationId || '');
+    const [registrationId, setRegistrationId] = useState(location.state?.applicationNo || '');
     const [submissionDate, setSubmissionDate] = useState(location.state?.submissionDate || '');
     const [ApplicationStatus, setApplicationStatus] = useState(location.state?.ApplicationStatus || '');
     useEffect(() => {
@@ -193,9 +198,11 @@ const ApplicationForm = () => {
 
     const handleRadioChange = useCallback((e) => {
         const { name, value } = e.target;
+
         setFormData(prev => ({
             ...prev,
             [name]: value
+
         }));
 
         if (name === 'operationalStatus') {
@@ -244,52 +251,69 @@ const ApplicationForm = () => {
         setCurrentStep(prev => prev > 1 ? prev - 1 : prev);
     }, []);
 
-  const handleSubmit = useCallback(async () => {
-  if (!validateStep(2, formData, setErrors)) return;
+    const handleSubmit = useCallback(async () => {
+        if (!validateStep(2, formData, setErrors)) return;
 
-  setIsSubmitting(true);
-  setSubmitError(null);
+        setIsSubmitting(true);
+        setSubmitError(null);
 
-  try {
-    const primaryContact = localStorage.getItem('primaryContactNumber');
-    const alternativeContact = formData.contactDetails || '';
+        try {
+            const primaryContact = localStorage.getItem('primaryContactNumber');
+            const alternativeContact = formData.contactDetails || '';
 
-    const apiData = transformRegistrationData(
-      {
-        ...formData,
-        primaryContactNumber: primaryContact,
-        contactDetails: alternativeContact
-      }, 
-      districts, 
-      mandals
-    );
+            const apiData = transformRegistrationData(
+                {
+                    ...formData,
+                    primaryContactNumber: primaryContact,
+                    contactDetails: alternativeContact
+                },
+                districts,
+                mandals
+            );
 
-    console.log("Submitting data:", apiData); // For debugging
-    
-    const response = await saveRegistration(apiData);
-    console.log("Response:", response.data);
-    
-    localStorage.setItem("applicationNo", response.data.applicationNo);
-    setApplicationStatus(response.data?.applicationStatus || 'APPLICATION_SUBMITTED');
-    setRegistrationId(response?.registrationId || `TH${Math.floor(100000 + Math.random() * 900000)}`);
-    setSubmissionDate(new Date().toLocaleDateString('en-GB'));
-    setCurrentStep(3);
+            console.log("Submitting data:", apiData); // For debugging
 
-    localStorage.removeItem('primaryContactNumber');
-    localStorage.removeItem('userPhone');
-  } catch (error) {
-    console.error('Submission failed:', error);
-    setSubmitError(error.message || 'Failed to submit application. Please try again.');
-  } finally {
-    setIsSubmitting(false);
-  }
-}, [formData, districts, mandals]);
+            const response = await saveRegistration(apiData);
+            console.log("Response:", response.data);
+
+            localStorage.setItem("applicationNo", response.data.applicationNo);
+            setApplicationStatus(response.data?.applicationStatus || 'APPLICATION_SUBMITTED');
+            setRegistrationId(response?.registrationId || `TH${Math.floor(100000 + Math.random() * 900000)}`);
+            setSubmissionDate(new Date().toLocaleDateString('en-GB'));
+            setCurrentStep(3);
+
+            localStorage.removeItem('primaryContactNumber');
+            localStorage.removeItem('userPhone');
+        } catch (error) {
+            console.error('Submission failed:', error);
+            setSubmitError(error.message || 'Failed to submit application. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [formData, districts, mandals]);
     const handleCreditFacilitySubmit = useCallback((e) => {
         e.preventDefault();
 
         const creditErrors = {};
         let isValid = true;
 
+
+
+        const outstanding = parseFloat(newCreditFacility.outstandingAmount) || 0;
+        const overdue = parseFloat(newCreditFacility.overdueAmount) || 0;
+
+        // Validate if overdue > outstanding
+        if (overdue > outstanding) {
+            creditErrors.overdueAmount = 'Overdue amount cannot be greater than outstanding amount';
+            isValid = false;
+        }
+
+        // Existing validations continue...
+
+        if (!isValid) {
+            setErrors(prev => ({ ...prev, ...creditErrors }));
+            return;
+        }
         if (!newCreditFacility.bankName.trim()) {
             creditErrors.bankName = 'Bank name is required';
             isValid = false;
@@ -320,23 +344,35 @@ const ApplicationForm = () => {
             return;
         }
 
-        setFormData(prev => ({
-            ...prev,
-            creditFacilities: [...prev.creditFacilities, {
-                bankName: newCreditFacility.bankName,
-                limitSanctioned: newCreditFacility.limitSanctioned,
-                outstandingAmount: newCreditFacility.outstandingAmount,
-                overdueAmount: newCreditFacility.overdueAmount,
-                overdueSince: newCreditFacility.overdueSince
-            }]
-        }));
+        setFormData(prev => {
+            if (prev.editingCreditIndex !== null && prev.editingCreditIndex !== undefined) {
+                // Edit mode: update the existing record
+                const updatedFacilities = [...prev.creditFacilities];
+                updatedFacilities[prev.editingCreditIndex] = { ...newCreditFacility };
+                return {
+                    ...prev,
+                    creditFacilities: updatedFacilities,
+                    editingCreditIndex: null // reset after editing
+                };
+            } else {
+                // Add mode: add new record
+                return {
+                    ...prev,
+                    creditFacilities: [
+                        ...prev.creditFacilities,
+                        { ...newCreditFacility }
+                    ]
+                };
+            }
+        });
 
         setNewCreditFacility({
             bankName: '',
             limitSanctioned: '',
             outstandingAmount: '',
             overdueAmount: '',
-            overdueSince: ''
+            overdueSince: '',
+            natureOfLoan: ''
         });
 
         setShowCreditModal(false);
@@ -347,9 +383,42 @@ const ApplicationForm = () => {
             delete newErrors.outstandingAmount;
             delete newErrors.overdueAmount;
             delete newErrors.overdueSince;
+            delete newErrors.natureOfLoan;
             return newErrors;
         });
-    }, [newCreditFacility]);
+    }, [newCreditFacility, formData]);
+
+
+
+    const onAddCredit = () => {
+        setFormData(prev => ({
+            ...prev,
+            editingCreditIndex: null // Reset to null for add mode
+        }));
+        setNewCreditFacility({
+            bankName: '',
+            limitSanctioned: '',
+            outstandingAmount: '',
+            overdueAmount: '',
+            overdueSince: '',
+            natureOfLoan: ''
+        });
+        setShowCreditModal(true);
+    };
+    const onDeleteCredit = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            creditFacilities: prev.creditFacilities.filter((_, i) => i !== index)
+        }));
+    };
+    const onEditCredit = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            editingCreditIndex: index
+        }));
+        setNewCreditFacility({ ...formData.creditFacilities[index] }); // populate modal form
+        setShowCreditModal(true); // open modal
+    };
 
     const progressPercentage = useMemo(() => ((currentStep - 1) / 2) * 100, [currentStep]);
 
@@ -417,15 +486,20 @@ const ApplicationForm = () => {
                                                     onBlur={handleBlur}
                                                     onPrev={prevStep}
                                                     onSubmit={handleSubmit}
-                                                    onAddCredit={() => setShowCreditModal(true)}
+                                                    //onAddCredit={() => setShowCreditModal(true)}
+                                                    onAddCredit={onAddCredit}
                                                     isSubmitting={isSubmitting}
                                                     submitError={submitError}
+                                                    onEditCredit={onEditCredit}
+                                                    onDeleteCredit={onDeleteCredit}
+
+
                                                 />
                                             )}
 
                                             {currentStep === 3 && (
                                                 <StatusStep
-                                                    registrationId={registrationId}
+                                                    registrationId={location.state?.applicationNo || ''}
                                                     submissionDate={submissionDate}
                                                     ApplicationStatus={ApplicationStatus}
                                                 />

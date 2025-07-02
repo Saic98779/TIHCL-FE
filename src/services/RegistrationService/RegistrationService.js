@@ -64,7 +64,7 @@ export const NewApplication = async (pageNo = 1, pageSize = 10) => {
   try {
     const response = await api.get('/registrations/new/applications', {
       params: {
-        pageSize ,
+        pageSize,
         pageNo
       }
     });
@@ -86,7 +86,7 @@ export const PendingApplication = async (pageNo = 1, pageSize = 4) => {
     const response = await api.get('/registrations/under-processing', {
       params: { pageNo: pageNo - 1, pageSize } // Note: pageNo-1 for 0-based index
     });
-    
+
     // Return the raw API response structure
     return response.data;
   } catch (error) {
@@ -100,17 +100,17 @@ export const PendingApplication = async (pageNo = 1, pageSize = 4) => {
 
 
 
-  //  this function is for preliminary assessment
+//  this function is for preliminary assessment
 
 
-  export const preliminaryAssessment = async (registrationUsageId) => {
-    try {
-        const response = await api.get(`/registrations/usage/id/${registrationUsageId}`);
-        return response.data; // Return just the data part
-    } catch (error) {
-        console.error("Error in preliminaryAssessment:", error);
-        throw error;
-    }
+export const preliminaryAssessment = async (registrationUsageId) => {
+  try {
+    const response = await api.get(`/registrations/usage/id/${registrationUsageId}`);
+    return response.data; // Return just the data part
+  } catch (error) {
+    console.error("Error in preliminaryAssessment:", error);
+    throw error;
+  }
 };
 
 export const submitPreliminaryAssessment = async (applicationNo, assessmentData) => {
@@ -151,13 +151,67 @@ export const managerLevelOne = async (pageNo = 0, pageSize = 10) => {
 
 // manager one application status updating
 
-export const updateApplicationStatusByManagerOne = async (appNo) =>{
+
+
+export const updateApplicationStatusByManagerOneApprove = async (
+  applicationNo,
+  applicationStatus,
+  reasonForRejection
+) => {
+  console.log(applicationNo, applicationStatus, reasonForRejection);
 
   try {
-     const response  = await api.put(`/registrations/status/updation/${appNo}`)
-      console.log("response from the manager one application status updating api", response.date);
-      return response.data;
+    const response = await api.put(
+      `/registrations/status/updation/${applicationNo}?appStatus=${applicationStatus}&reasonForRejection=${reasonForRejection}`,
+
+    );
+
+    console.log("Response from manager one API:", response.data);
+    return response.data;
   } catch (error) {
-      console.log('Error in updating applications status by manager one api:', error)
+    console.error('Error updating application status:', error);
+    throw error;
   }
+};
+
+
+export const updateApplicationStatusByManagerOneReject = async (
+  applicationNo,
+  applicationStatus,
+  reasonForRejection
+) => {
+  console.log(applicationNo, applicationStatus, reasonForRejection);
+
+  try {
+    const response = await api.put(
+      `/registrations/status/updation/${applicationNo}?appStatus=${applicationStatus}&reasonForRejection=${reasonForRejection}`,
+
+    );
+
+    console.log("Response from manager one API:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating application status:', error);
+    throw error;
+  }
+};
+
+
+
+
+//  unit visit api call 
+
+export const UnitVisit = async () => {
+
+  try {
+    const response = api.post(`/unitvisit/save`)
+
+    console.log(response.data)
+    return response.data
+  } catch (error) {
+
+    console.log('error in the unit visit api', error)
+
+  }
+
 }

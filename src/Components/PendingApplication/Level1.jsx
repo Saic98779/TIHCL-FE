@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import { managerLevelOne } from '../../services/RegistrationService/RegistrationService';
-import  {updateApplicationStatusByManagerOne} from '../../services/RegistrationService/RegistrationService'
+import { updateApplicationStatusByManagerOneApprove } from '../../services/RegistrationService/RegistrationService';
+import { updateApplicationStatusByManagerOneReject } from '../../services/RegistrationService/RegistrationService';
+
 function Level1() {
   const [allApplications, setAllApplications] = useState([]);
   const [displayedApplications, setDisplayedApplications] = useState([]);
@@ -17,30 +19,29 @@ function Level1() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectRemarks, setRejectRemarks] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  
+ const [showStressScore, setShowStressScore] = useState(false); 
   const pageSizeOptions = [4, 10, 25, 50, 75];
 
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const response = await managerLevelOne(currentPage - 1, pageSize); // Note: pageNo is 0-based in API
-      
-      setDisplayedApplications(response.data || []);
-      setTotalPages(response.totalPages || 1);
-      setTotalItems(response.totalElements || 0);
-      
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-      setDisplayedApplications([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await managerLevelOne(currentPage - 1, pageSize);
 
-  fetchData();
-}, [currentPage, pageSize]);
+        setDisplayedApplications(response.data || []);
+        setTotalPages(response.totalPages || 1);
+        setTotalItems(response.totalElements || 0);
+
+      } catch (error) {
+        console.error('Error fetching applications:', error);
+        setDisplayedApplications([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentPage, pageSize]);
 
   const handleViewApplication = (app) => {
     setSelectedApplication(app);
@@ -52,14 +53,15 @@ function Level1() {
     setSelectedApplication(null);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     setShowApproveModal(true);
   };
 
-  const handleConfirmApprove = () => {
-    // API call to approve the application
-    //const response = updateApplicationStatusByManagerOne(selectedApplication.)
-    console.log('Approving application:', selectedApplication);
+  const handleConfirmApprove = async () => {
+    const status = "MANAGER_APPROVAL_1";
+    const response = await updateApplicationStatusByManagerOneApprove(selectedApplication.applicationNo, status, null);
+    console.log("", response);
+
     setShowApproveModal(false);
     setShowModal(false);
     setShowSuccessModal(true);
@@ -69,8 +71,10 @@ function Level1() {
     setShowRejectModal(true);
   };
 
-  const handleConfirmReject = () => {
-    // API call to reject the application with remarks
+  const handleConfirmReject = async() => {
+     const status = "REJECTED_MANAGER_APPROVAL_1";
+    const response = await updateApplicationStatusByManagerOneReject(selectedApplication.applicationNo, status, rejectRemarks);
+    console.log("", response);
     console.log('Rejecting application:', selectedApplication, 'with remarks:', rejectRemarks);
     setShowRejectModal(false);
     setShowModal(false);
@@ -118,18 +122,34 @@ function Level1() {
           <div className="card-header bg-theme text-white d-flex justify-content-between align-items-center">
             <h6 className="mb-0">Pending Approvals - Level 1</h6>
             <div className="d-flex align-items-center">
-              <label htmlFor="pageSize" className="me-2 mb-0 text-white">Items per page:</label>
-              <select
-                id="pageSize"
-                className="form-select form-select-sm w-auto px-4"
-                value={pageSize}
-                onChange={handlePageSizeChange}
-              >
-                {pageSizeOptions.map(size => (
-                  <option key={size} value={size}>{size}</option>
-                ))}
-              </select>
-            </div>
+  <label htmlFor="pageSize" className="me-2 mb-0 text-white small">Items:</label>
+  <div className="position-relative" style={{ minWidth: "65px" }}>
+    <select
+      id="pageSize"
+      className="form-select form-select-sm px-2 py-1"
+      value={pageSize}
+      onChange={handlePageSizeChange}
+      style={{
+        fontSize: "0.875rem",
+        height: "28px",
+        appearance: "none",
+        paddingRight: "25px" // Space for arrow
+      }}
+    >
+      {pageSizeOptions.map(size => (
+        <option key={size} value={size}>{size}</option>
+      ))}
+    </select>
+    <div 
+      className="position-absolute end-0 top-50 translate-middle-y me-2"
+      style={{ pointerEvents: "none" }}
+    >
+      <svg width="10" height="6" viewBox="0 0 10 6" fill="currentColor">
+        <path d="M0 0.5L5 5.5L10 0.5H0Z" />
+      </svg>
+    </div>
+  </div>
+</div>
           </div>
           <div className="card-body">
             {isLoading ? (
@@ -252,164 +272,234 @@ function Level1() {
       </div>
 
       {/* View Application Modal */}
-      {/* View Application Modal */}
-<Modal show={showModal} onHide={handleCloseModal} size="xl" scrollable centered>
-  <Modal.Header className="bg-theme text-white">
-    <Modal.Title className="fw-bold">View Application</Modal.Title>
-    <button 
-      type="button" 
-      className="btn-close text-white" 
-      onClick={handleCloseModal}
-      aria-label="Close"
-    >
-      <span className="bi bi-x-lg"></span>
-    </button>
-  </Modal.Header>
-  <Modal.Body>
-    <div className="row">
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Name Of Firm</label>
-          <label className="d-block fs-md">{selectedApplication?.enterpriseName || 'N/A'}</label>
-        </div>
-      </div>
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Udyam Number</label>
-          <label className="d-block fs-md">{selectedApplication?.udyamRegNumber || 'N/A'}</label>
-        </div>
-      </div>
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Size Of Unit</label>
-          <label className="d-block fs-md">{selectedApplication?.enterpriseCategory || 'N/A'}</label>
-        </div>
-      </div>
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Nature Of Activity</label>
-          <label className="d-block fs-md">{selectedApplication?.natureOfActivity || 'N/A'}</label>
-        </div>
-      </div>
-    </div>
-    
-    <div>
-      <h6 className="fw-600 mb-2">Factory Location</h6>
-      <div className="row">
-        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div className="mb-3">
-            <label className="d-block fs-md fw-600 mb-1">District</label>
-            <label className="d-block fs-md">{selectedApplication?.district || 'N/A'}</label>
+      <Modal show={showModal} onHide={handleCloseModal} size="xl" scrollable centered>
+        <Modal.Header className="bg-theme text-white">
+          <Modal.Title className="fw-bold">View Application</Modal.Title>
+          <button
+            type="button"
+            className="btn-close text-white"
+            onClick={handleCloseModal}
+            aria-label="Close"
+          >
+            <span className="bi bi-x-lg"></span>
+          </button>
+        </Modal.Header>
+        <Modal.Body>
+          {/* Basic Information Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Basic Information</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-3 mb-3"><label className="fw-600">Name Of Firm</label><div>{selectedApplication?.enterpriseName || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Promoter Name</label><div>{selectedApplication?.promoterName || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Constitution</label><div>{selectedApplication?.constitution || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Production Date</label><div>{selectedApplication?.productionDate || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Udyam Number</label><div>{selectedApplication?.udyamRegNumber || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Enterprise Category</label><div>{selectedApplication?.enterpriseCategory || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Nature Of Activity</label><div>{selectedApplication?.natureOfActivity || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Sector</label><div>{selectedApplication?.sector || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Type Of Product</label><div>{selectedApplication?.typeOfProduct || 'N/A'}</div></div>
+                <div className="col-md-3 mb-3"><label className="fw-600">Product Usage</label><div>{selectedApplication?.productUsage || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Industrial Park</label><div>{selectedApplication?.industrialPark || 'N/A'}</div></div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-          <div className="mb-3">
-            <label className="d-block fs-md fw-600 mb-1">Mandal</label>
-            <label className="d-block fs-md">{selectedApplication?.mandal || 'N/A'}</label>
+
+          {/* Contact Information Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Contact Information</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                
+                <div className="col-md-4 mb-3"><label className="fw-600">Contact Number</label><div>{selectedApplication?.contactNumber || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Alternate Contact Number</label><div>{selectedApplication?.altContactNumber || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Email</label><div>{selectedApplication?.email || 'N/A'}</div></div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="col-12 col-sm-6 col-md-4 col-lg-6">
-          <div className="mb-3">
-            <label className="d-block fs-md fw-600 mb-1">Address</label>
-            <label className="d-block fs-md">
-              {selectedApplication?.address || 'N/A'}
-            </label>
+
+          {/* Address Information Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Address Information</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                
+                <div className="col-md-4 mb-3"><label className="fw-600">State</label><div>{selectedApplication?.state || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">District</label><div>{selectedApplication?.district || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Mandal</label><div>{selectedApplication?.mandal || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Address</label><div>{selectedApplication?.address || 'N/A'}</div></div>
+                
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="col-12 col-sm-6 col-md-4 col-lg-6">
-          <div className="mb-3">
-            <label className="d-block fs-md fw-600 mb-1">Confirmation of Loans Credit Facilities</label>
-            <label className="d-block fs-md">{selectedApplication?.hasLoans ? 'Yes' : 'No'}</label>
+
+          {/* Operational Information Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Operational Information</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-4 mb-3"><label className="fw-600">Operation Status</label><div>{selectedApplication?.operationStatus ? 'Yes' : 'No'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Operating Satisfactorily</label><div>{selectedApplication?.operatingSatisfactorily ? 'Yes' : 'No'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Operating Difficulties</label><div>{selectedApplication?.operatingDifficulties?.join(', ') || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Issue Date</label><div>{selectedApplication?.issueDate || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Reason For Not Operating</label><div>{selectedApplication?.reasonForNotOperating || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Restart Support</label><div>{selectedApplication?.restartSupport || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Restart Intent</label><div>{selectedApplication?.restartIntent ? 'Yes' : 'No'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Unit Status</label><div>{selectedApplication?.unitStatus || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Problems Faced</label><div>{selectedApplication?.problemsFaced || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Expected Solution</label><div>{selectedApplication?.expectedSolution || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Observations</label><div>{selectedApplication?.observations || 'N/A'}</div></div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    {Array.isArray(selectedApplication?.creditFacilityDetails) && selectedApplication.creditFacilityDetails.length > 0 && (
-  <div className="mb-3">
-    <h6 className="fw-600 mb-2">Loans</h6>
-    <div className="table-responsive">
-      <table className="table table-striped table-borderless fs-md">
-        <thead className="bg-theme text-white">
-          <tr>
-            <th>S.No</th>
-            <th>Name Of Bank / Lender</th>
-            <th>Limit Sanctioned</th>
-            <th>Outstanding Amount</th>
-            <th>Overdue Amount</th>
-            <th>Overdue Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {selectedApplication.creditFacilityDetails.map((loan, index) => (
-            <tr key={index}>
-              <td>{index + 1}</td>
-              <td>{loan.bankName || 'N/A'}</td>
-              <td>{loan.limitSanctioned ?? 'N/A'}</td>
-              <td>{loan.outstandingAmount ?? 'N/A'}</td>
-              <td>{loan.overdueAmount ?? 'N/A'}</td>
-              <td>{loan.overdueDate || 'N/A'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-    
-    <div className="mb-3">
-      <label className="d-block fs-md fw-600 mb-1">What are your problems?</label>
-      <label className="d-block fs-md">
-        {selectedApplication?.problemsFaced || 'N/A'}
-      </label>
-    </div>
-    <div className="mb-3">
-      <label className="d-block fs-md fw-600 mb-1">What is the expected solutions?</label>
-      <label className="d-block fs-md">
-        {selectedApplication?.expectedSolution || 'N/A'}
-      </label>
-    </div>
-    <div className="mb-3">
-      <label className="d-block fs-md fw-600 mb-1">Observations</label>
-      <label className="d-block fs-md">
-        {selectedApplication?.observations || 'N/A'}
-      </label>
-    </div>
-    <div className="mb-3">
-      <label className="d-block fs-md fw-600 mb-1">Status Update</label>
-      <label className="d-block fs-md">
-        {selectedApplication?.status || 'N/A'}
-      </label>
-    </div>
-    
-    <div className="row">
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Type Of Product</label>
-          <label className="d-block fs-md">{selectedApplication?.typeOfProduct || 'N/A'}</label>
-        </div>
-      </div>
-      <div className="col-12 col-sm-6 col-md-4 col-lg-6">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">Where is the Product Used?</label>
-          <label className="d-block fs-md">
-            {selectedApplication?.productUsage || 'N/A'}
-          </label>
-        </div>
-      </div>
-      <div className="col-12 col-sm-6 col-md-4 col-lg-3">
-        <div className="mb-3">
-          <label className="d-block fs-md fw-600 mb-1">GST Number</label>
-          <label className="d-block fs-md">{selectedApplication?.gstNumber || 'N/A'}</label>
-        </div>
-      </div>
-    </div>
-  </Modal.Body>
-  <Modal.Footer>
-    <Button variant="primary" onClick={handleApprove}>Approve</Button>
-    <Button variant="danger" onClick={handleReject}>Reject</Button>
-  </Modal.Footer>
-</Modal>
+
+          {/* Financial Information Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Financial Information</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-4 mb-3"><label className="fw-600">Existing Credit</label><div>{selectedApplication?.existingCredit ? 'Yes' : 'No'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Required Credit Limit</label><div>{selectedApplication?.requiredCreditLimit || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Investment Subsidy</label><div>{selectedApplication?.investmentSubsidy ? 'Yes' : 'No'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Total Amount Sanctioned</label><div>{selectedApplication?.totalAmountSanctioned || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Amount Released</label><div>{selectedApplication?.amountReleased || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Amount To Be Released</label><div>{selectedApplication?.amountToBeReleased || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Maintaining Account By</label><div>{selectedApplication?.maintainingAccountBy || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">GST Number</label><div>{selectedApplication?.gstNumber || 'N/A'}</div></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Application Details Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Application Details</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-4 mb-3"><label className="fw-600">Application No</label><div>{selectedApplication?.applicationNo || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Status</label><div>{selectedApplication?.status || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Date Of Submission</label><div>{selectedApplication?.dateOfSubmission || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Application Status</label><div>{selectedApplication?.applicationStatus || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Executive</label><div>{selectedApplication?.executive || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Executive Feedback Date</label><div>{selectedApplication?.executiveFeedbackDate || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Reason For Rejection</label><div>{selectedApplication?.reasonForRejection || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Help Message</label><div>{selectedApplication?.helpMsg || 'N/A'}</div></div>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Loans Table */}
+          {Array.isArray(selectedApplication?.creditFacilityDetails) && selectedApplication.creditFacilityDetails.length > 0 && (
+            <div className="card mb-3">
+              <div className="card-header bg-light">
+                <h5 className="mb-0">Loan Details</h5>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>S.No</th>
+                        <th>Name Of Bank / Lender</th>
+                        <th>Limit Sanctioned</th>
+                        <th>Outstanding Amount</th>
+                        <th>Overdue Amount</th>
+                        <th>Overdue Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedApplication.creditFacilityDetails.map((loan, index) => (
+                        <tr key={index}>
+                          <td>{index + 1}</td>
+                          <td>{loan.bankName || 'N/A'}</td>
+                          <td>{loan.limitSanctioned ?? 'N/A'}</td>
+                          <td>{loan.outstandingAmount ?? 'N/A'}</td>
+                          <td>{loan.overdueAmount ?? 'N/A'}</td>
+                          <td>{loan.overdueDate || 'N/A'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stress Score Section - Collapsible */}
+          <div className="card mb-3">
+            <div className="card-header bg-light d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">Stress Score</h5>
+              <button
+                className="btn btn-sm btn-outline-primary"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#stressScoreCollapse"
+                aria-expanded="false"
+                aria-controls="stressScoreCollapse"
+                onClick={() => {
+                  // This is just to force re-render for icon, not needed if using Bootstrap collapse events
+                  setShowStressScore(prev => !prev);
+                }}
+              >
+                <i className={showStressScore ? "bi bi-chevron-up" : "bi bi-chevron-down"}></i>
+              </button>
+            </div>
+            <div className="collapse" id="stressScoreCollapse">
+              <div className="card-body">
+                {selectedApplication?.stressScore?.length > 0 ? (
+                  <>
+                    <div className="table-responsive">
+                      <table className="table table-striped">
+                        <thead>
+                          <tr>
+                            <th>Issue</th>
+                            <th>Risk Categorisation</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedApplication.stressScore.map((score, index) => (
+                            <tr key={index}>
+                              <td>{score.issue || 'N/A'}</td>
+                              <td>{score.riskCategorisation || 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-3 fw-bold">
+                      Risk Category Score Total: {selectedApplication?.riskCategoryScore || 'N/A'}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-3">
+                    <div className="alert alert-info mb-0">
+                      No stress score data available. Risk Category Score: {selectedApplication?.riskCategoryScore || 'N/A'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={handleApprove}>Approve</Button>
+          <Button variant="danger" onClick={handleReject}>Reject</Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Approve Confirmation Modal */}
       <Modal show={showApproveModal} onHide={() => setShowApproveModal(false)} centered>

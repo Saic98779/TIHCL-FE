@@ -22,7 +22,7 @@ function Manager() {
 
   const renderLevel = () => {
     switch (selectedLevel) {
-      case 1: return <Level1 />;
+      case 1: return <Level1  />;
       case 2: return <Level2 />;
       case 3: return <Level3 />;
       default: return null;

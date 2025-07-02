@@ -20,8 +20,8 @@ export const validateField = (name, value, formData) => {
 
         case 'dateProduction':
             if (!value) error = 'Date is required';
-            else if (new Date(value) > new Date()) error = 'Date cannot be in the future';
-            else if (new Date(value) < new Date('2000-01-01')) error = 'Date seems too old';
+            // else if (new Date(value) > new Date()) error = 'Date cannot be in the future';
+            // else if (new Date(value) < new Date('2000-01-01')) error = 'Date seems too old';
             break;
 
          case 'udyamRegistration':
@@ -41,7 +41,7 @@ export const validateField = (name, value, formData) => {
         }
     }
     break;
-         case 'state':
+         //case 'state':
         case 'industrialPark':
          case 'district':
          case 'mandal':
@@ -50,15 +50,23 @@ export const validateField = (name, value, formData) => {
 
         case 'address':
             if (!value.trim()) error = 'Address is required';
-            else if (value.length < 5) error = 'Address too short (min 10 chars)';
+            // else if (value.length < 5) error = 'Address too short (min 10 chars)';
             break;
 
-        case 'email':
-              if(value){
-                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = 'Invalid email format';
-                 
-              }
-            break;
+  case 'email':
+  if (value) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+    const domainPart = value.split('@')[1];
+    const domainSegments = domainPart?.split('.');
+    
+    // Check last segment (TLD) only contains letters
+    const tld = domainSegments?.[domainSegments.length - 1];
+    
+    if (!emailRegex.test(value) || !/^[a-zA-Z]+$/.test(tld)) {
+      error = 'Invalid email format';
+    }
+  }
+  break;
 
         case 'enterpriseCategory':
             if (!value) error = 'Please select enterprise category';
@@ -115,27 +123,31 @@ export const validateField = (name, value, formData) => {
             break;
 
         case 'subsidyAmountSanctioned':
-            if (formData.investmentSubsidy === 'investmentYes' && !value)
-                error = 'Sanctioned amount is required';
-            else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
-            break;
+    if (formData.investmentSubsidy === 'yes' && !value)
+        error = 'Sanctioned amount is required';
+    else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
+    break;
 
-        case 'subsidyAmountReleased':
-            if (formData.investmentSubsidy === 'investmentYes' && !value)
-                error = 'Released amount is required';
-            else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
-            else if (parseInt(value) > parseInt(formData.subsidyAmountSanctioned || 0))
-                error = 'Cannot exceed sanctioned amount';
-            break;
+case 'subsidyAmountReleased':
+    if (formData.investmentSubsidy === 'yes' && !value)
+        error = 'Released amount is required';
+    else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
+    else if (parseInt(value) > parseInt(formData.subsidyAmountSanctioned || 0))
+        error = 'Cannot exceed sanctioned amount';
+    break;
 
-        case 'subsidyAmountToBeReleased':
-            if (formData.investmentSubsidy === 'investmentYes' && !value)
-                error = 'Amount to be released is required';
-            else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
-            else if (parseInt(value) > (parseInt(formData.subsidyAmountSanctioned || 0) -
-                parseInt(formData.subsidyAmountReleased || 0)))
-                error = 'Cannot exceed remaining amount';
-            break;
+case 'subsidyAmountToBeReleased':
+    if (formData.investmentSubsidy === 'yes' && !value)
+        error = 'Amount to be released is required';
+    else if (value && !/^\d+$/.test(value)) error = 'Must be a number';
+    else if (
+        parseInt(value) >
+        (parseInt(formData.subsidyAmountSanctioned || 0) -
+            parseInt(formData.subsidyAmountReleased || 0))
+    )
+        error = 'Cannot exceed remaining amount';
+    break;
+
 
         case 'accountsMaintenance':
             if (!value) error = 'Please select how you maintain accounts';

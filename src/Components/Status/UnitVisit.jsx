@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const UnitVisit = ({ formData, updateFormData, nextStep, prevStep }) => {
+  console.log("formData", formData)
   const [visitData, setVisitData] = useState({
     visitedBy: formData.visitedBy || '',
     visitDate: formData.visitDate || '',
@@ -12,12 +13,12 @@ const UnitVisit = ({ formData, updateFormData, nextStep, prevStep }) => {
     registerAddress: formData.registerAddress || '',
     sameAsFactory: formData.sameAsFactory || false,
     machinery: formData.machinery || [{
-      type: 'Machine 1',
-      purpose: 'Purpose 1',
-      count: '3',
-      cost: '400000',
-      condition: 'Better',
-      value: '10'
+      type: '',
+      purpose: '',
+      count: '',
+      cost: '',
+      condition: '',
+      value: ''
     }],
     upgradationRequired: formData.upgradationRequired || false,
     machineryAligned: formData.machineryAligned || false,
@@ -48,7 +49,7 @@ const UnitVisit = ({ formData, updateFormData, nextStep, prevStep }) => {
     recentConsumption: formData.recentConsumption || '',
     maxConsumption: formData.maxConsumption || ''
   });
-
+   console.log(visitData)
   const [showMachineryModal, setShowMachineryModal] = useState(false);
   const [newMachinery, setNewMachinery] = useState({
     type: '',

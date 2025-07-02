@@ -3,23 +3,50 @@ import { useLocation } from 'react-router-dom';
 import { preliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
 import { submitPreliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
 import { getAllDistricts, getMandalsByDistrict } from '../../services/RegistrationService/RegistrationService';
+import { validateField } from '../../utils/validation/formValidation';
+
+const validateUdyamNumber = (udyamNumber) => {
+    if (!udyamNumber || !udyamNumber.trim()) {
+        return 'Udyam Number is required';
+    }
+    // Example format: UDYAM-TS-00-0000000 (adjust regex if needed)
+    const udyamRegex = /^udyam-[a-z]{2}-[0-9]{2}-[0-9]{7}$/i;
+    if (!udyamRegex.test(udyamNumber.trim())) {
+        return 'Invalid format. Correct Format: UDYAM-XX-00-1234567 OR udyam-xx-12-1234567';
+    }
+    return '';
+};
 
 const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
+
+
+
+
     const location = useLocation();
+
+    const [factoryModalTouched, setFactoryModalTouched] = useState({
+        district: false,
+        mandal: false,
+        address: false
+    });
     const [formSubmitted, setFormSubmitted] = useState(false);
-     const [touchedFields, setTouchedFields] = useState({
-  observations: false,
-  statusUpdate: false,
-  riskAssessment: false
-});
+    const [touchedFields, setTouchedFields] = useState({
+        observations: false,
+        statusUpdate: false,
+        riskAssessment: false
+    });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     const [btndisable, setBtnDisable] = useState(true);
     const [errors, setErrors] = useState({
         gstNumber: '',
+        udyamNumber: '',
         stressScore: '',
         observations: '',
-        statusUpdate: ''
+        statusUpdate: '',
+        loans: '',
+        sizeOfUnit: '',
+        natureOfActivity: '',
     });
     const [isLoading, setIsLoading] = useState(true);
     const [apiError, setApiError] = useState(null);
@@ -76,6 +103,21 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     const [districts, setDistricts] = useState([]);
     const [mandals, setMandals] = useState([]);
     const [riskCategories, setRiskCategories] = useState(Array(10).fill(null));
+    const [loanErrors, setLoanErrors] = useState({});
+
+
+    const validateLoan = (loan) => {
+        const errors = {};
+        if (!loan.bankName || !loan.bankName.trim()) errors.bankName = "Bank/Fi Name is required";
+        if (!loan.natureOfLoan || !loan.natureOfLoan.trim()) errors.natureOfLoan = "Nature of Loan is required";
+        if (!loan.limitSanctioned || isNaN(loan.limitSanctioned) || Number(loan.limitSanctioned) < 0) errors.limitSanctioned = "Enter a valid Limit Sanctioned";
+        if (!loan.outstandingAmount || isNaN(loan.outstandingAmount) || Number(loan.outstandingAmount) < 0) errors.outstandingAmount = "Enter a valid Outstanding Amount";
+        if (!loan.overdueAmount || isNaN(loan.overdueAmount) || Number(loan.overdueAmount) < 0) errors.overdueAmount = "Enter a valid Overdue Amount";
+        if (Number(loan.overdueAmount) > Number(loan.outstandingAmount)) errors.overdueAmount = "Overdue Amount cannot be greater than Outstanding Amount";
+        if (!loan.overdueSince) errors.overdueSince = "Overdue Since is required";
+        else if (new Date(loan.overdueSince) > new Date()) errors.overdueSince = "Future date not allowed";
+        return errors;
+    };
 
     // Fetch districts
     const fetchDistricts = async () => {
@@ -104,16 +146,16 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
     // Calculate stress score
     const calculateStressScore = () => {
-  const unansweredQuestions = riskCategories.filter(cat => !cat).length;
-  if (unansweredQuestions > 0) {
-    if (touchedFields.riskAssessment || formSubmitted) {
-      setErrors(prev => ({
-        ...prev,
-        stressScore: 'Please answer all risk assessment questions'
-      }));
-    }
-    return;
-  }
+        const unansweredQuestions = riskCategories.filter(cat => !cat).length;
+        if (unansweredQuestions > 0) {
+            if (touchedFields.riskAssessment || formSubmitted) {
+                setErrors(prev => ({
+                    ...prev,
+                    stressScore: 'Please answer all risk assessment questions'
+                }));
+            }
+            return;
+        }
 
         let totalApplicableQuestions = 10;
         let totalScore = 0;
@@ -192,31 +234,113 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
             stressScore: ''
         }));
     };
-    const transformRiskCategoriesForApi = (riskCategories) => {
-        const riskQuestions = [
-            "Delay in project implementation",
-            "Production below projected level of capacity utilization",
-            "Gradual decrease of sales",
-            "Delay in payment of statutory dues",
-            "Diversion of working capital for capital expenses",
-            "Abnormal increase in creditors",
-            "SMA 2 / NPA Status of the Account",
-            "Unjustified rapid expansion without proper financial tie-up",
-            "Leverage Position",
-            "Liquidity Position"
-        ];
+    const riskCategoryLabels = [
+    // Q1
+    {
+        "1": "Mild delay",
+        "2": "Moderate Delay",
+        "3": "Abnormal Delay",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q2
+    {
+        "1": "Temporarily",
+        "2": "Frequently",
+        "3": "Permanently",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q3
+    {
+        "1": "Fair Chance to increase",
+        "2": "Moderate Chance to increase",
+        "3": "Bleak Chance",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q4
+    {
+        "1": "Temporary cash flow mismatches",
+        "2": "Cash Flow mismatches coupled with diversion of funds",
+        "3": "Mis-utilization of cash flows and major diversions",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q5
+    {
+        "1": "Diversion with definite source of resources to rebuild working capital in a specific timeline",
+        "2": "Diversion without identified source to rebuild the working capital",
+        "3": "Permanent diversion",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q6
+    {
+        "1": "Temporary phenomena due to unforeseen Internal",
+        "2": "External factors, with definite timeline for correction",
+        "3": "Issues related to production, marketing, temporary diversion of funds, which require considerable time to correct",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q7
+    {
+        "1": "SMA 1/2/3",
+        "2": "Soft NPA",
+        "3": "Hard NPA",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q8
+    {
+        "1": "Non-significant",
+        "2": "Significant",
+        "3": "Serious",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q9
+    {
+        "1": "Non-significant",
+        "2": "Significant",
+        "3": "Serious",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    },
+    // Q10
+    {
+        "1": "Non-significant",
+        "2": "Significant",
+        "3": "Serious",
+        "4": "Not Viable",
+        "5": "Not Applicable"
+    }
+];
 
-        return riskCategories
-            .map((category, index) => {
-                if (!category || category === "5") return null;
+const transformRiskCategoriesForApi = (riskCategories) => {
+    const riskQuestions = [
+        "Delay in project implementation",
+        "Production below projected level of capacity utilization",
+        "Gradual decrease of sales",
+        "Delay in payment of statutory dues",
+        "Diversion of working capital for capital expenses",
+        "Abnormal increase in creditors",
+        "SMA 2 / NPA Status of the Account",
+        "Unjustified rapid expansion without proper financial tie-up",
+        "Leverage Position",
+        "Liquidity Position"
+    ];
 
-                return {
-                    issue: riskQuestions[index] || `Risk Issue ${index + 1}`,
-                    riskCategorisation: category
-                };
-            })
-            .filter(Boolean);
-    };
+    return riskCategories
+        .map((category, index) => {
+            if (!category || category === "5") return null;
+            return {
+                issue: riskQuestions[index] || `Risk Issue ${index + 1}`,
+                riskCategorisation: riskCategoryLabels[index][category] || ""
+            };
+        })
+        .filter(Boolean);
+};
 
     const transformFormDataForApi = (localData) => {
         return {
@@ -243,6 +367,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
             existingCredit: localData.loansCreditFacilities === 'Yes',
             creditFacilityDetails: localData.loans.map(loan => ({
                 bankName: loan.bankName,
+                 natureOfLoan: loan.natureOfLoan,
                 limitSanctioned: parseFloat(loan.limitSanctioned) || 0,
                 outstandingAmount: parseFloat(loan.outstandingAmount) || 0,
                 overdueAmount: parseFloat(loan.overdueAmount) || 0,
@@ -270,11 +395,11 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
 
     const handleRiskCategoryChange = (index, value) => {
-  const newCategories = [...riskCategories];
-  newCategories[index] = value;
-  setRiskCategories(newCategories);
-  setTouchedFields(prev => ({ ...prev, riskAssessment: true }));
-};
+        const newCategories = [...riskCategories];
+        newCategories[index] = value;
+        setRiskCategories(newCategories);
+        setTouchedFields(prev => ({ ...prev, riskAssessment: true }));
+    };
 
     const handleConfirmField = (fieldName) => {
         setConfirmedFields({
@@ -299,6 +424,10 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const updateLoan = () => {
+
+        const errors = validateLoan(newLoan);
+        setLoanErrors(errors);
+        if (Object.keys(errors).length > 0) return;
         const updatedLoans = [...localData.loans];
         updatedLoans[editingLoanIndex] = newLoan;
         setLocalData({
@@ -317,17 +446,17 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const handleChange = (e) => {
-  const { name, value, type, checked } = e.target;
-  setLocalData({
-    ...localData,
-    [name]: type === 'radio' ? value : (type === 'checkbox' ? checked : value)
-  });
+        const { name, value, type, checked } = e.target;
+        setLocalData({
+            ...localData,
+            [name]: type === 'radio' ? value : (type === 'checkbox' ? checked : value)
+        });
 
-  // Mark field as touched when changed
-  if (name === 'observations' || name === 'statusUpdate') {
-    setTouchedFields(prev => ({ ...prev, [name]: true }));
-  }
-};
+        // Mark field as touched when changed
+        if (name === 'observations' || name === 'statusUpdate') {
+            setTouchedFields(prev => ({ ...prev, [name]: true }));
+        }
+    };
     const handleLoanChange = (e) => {
         const { name, value } = e.target;
         setNewLoan({
@@ -337,6 +466,10 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const addLoan = () => {
+        const errors = validateLoan(newLoan);
+        setLoanErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
         if (editingLoanIndex !== null) {
             updateLoan();
         } else {
@@ -356,30 +489,34 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const handleSubmit = async (e) => {
-  e.preventDefault();
-  setFormSubmitted(true);
-  
-  // Force all fields to be considered touched on submit
-  setTouchedFields({
-    observations: true,
-    statusUpdate: true,
-    riskAssessment: true
-  });
+        e.preventDefault();
+        setFormSubmitted(true);
 
-  // Run validation checks
-  const gstError = validateGST(localData.gstNumber, true);
-  const observationsError = !localData.observations.trim() ? 'Observations are required' : '';
-  const statusError = !localData.statusUpdate ? 'Please select a status' : '';
-  const stressScoreError = localData.stressScore === '0%' ? 'Please complete the risk assessment' : '';
+        // Force all fields to be considered touched on submit
+        setTouchedFields({
+            observations: true,
+            statusUpdate: true,
+            riskAssessment: true
+        });
 
-  setErrors({
-    gstNumber: gstError,
-    observations: observationsError,
-    statusUpdate: statusError,
-    stressScore: stressScoreError
-  });
+        // Run validation checks
+        const gstError = validateGST(localData.gstNumber, true);
+        const observationsError = !localData.observations.trim() ? 'Observations are required' : '';
+        const statusError = !localData.statusUpdate ? 'Please select a status' : '';
+        const stressScoreError = localData.stressScore === '0%' ? 'Please complete the risk assessment' : '';
+        const loansError = localData.loansCreditFacilities === 'Yes' && localData.loans.length === 0
+            ? 'At least one loan must be added'
+            : '';
+
+        setErrors({
+            gstNumber: gstError,
+            observations: observationsError,
+            statusUpdate: statusError,
+            stressScore: stressScoreError,
+            loans: loansError
+        });
         // Check if form is valid
-        if (gstError || observationsError || statusError || stressScoreError) {
+        if (gstError || observationsError || statusError || stressScoreError || loansError) {
             return;
         }
 
@@ -415,6 +552,19 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
     };
 
     const handleUpdateField = (fieldName) => {
+        if (fieldName === 'nameOfFirm' && (!tempFieldValue || !tempFieldValue.trim())) {
+            setErrors(prev => ({
+                ...prev,
+                nameOfFirm: 'Name Of Firm is required'
+            }));
+            return;
+        } else if (fieldName === 'nameOfFirm') {
+            setErrors(prev => ({
+                ...prev,
+                nameOfFirm: ''
+            }));
+        }
+
         setLocalData({
             ...localData,
             [fieldName]: tempFieldValue
@@ -449,7 +599,12 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
         setTempFieldValue('');
     };
-
+    const validateFactoryLocation = (location) => {
+        if (!location.district) return "District is required";
+        if (!location.mandal) return "Mandal is required";
+        if (!location.address) return "Address is required";
+        return "";
+    };
     const handleOpenModal = (fieldName) => {
         switch (fieldName) {
             case 'nameOfFirm':
@@ -568,17 +723,27 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
 
 
-    const validateGST = (gstNumber, checkSubmitted = true) => {
-        if (!checkSubmitted || formSubmitted) {
-            if (!gstNumber.trim()) {
-                return 'GST Number is required';
-            } else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gstNumber)) {
-                return 'Invalid GST Number format';
-            }
-        }
-        return '';
-    };
+    //this is required for gst validation temporary disabled it need to enable it later
 
+    // const validateGST = (gstNumber, checkSubmitted = true) => {
+    //     if (!checkSubmitted || formSubmitted) {
+    //         if (!gstNumber.trim()) {
+    //             return 'GST Number is required';
+    //         } else if (!/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gstNumber)) {
+    //             return 'Invalid GST Number format';
+    //         }
+    //     }
+    //     return '';
+    // };
+
+
+    const validateGST = (gstNumber, checkSubmitted = true) => {
+    // Only validate format if GST is not empty
+    if (gstNumber.trim() && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i.test(gstNumber)) {
+        return 'Invalid GST Number format';
+    }
+    return '';
+};
     const handleValidation = (e) => {
         const { name, value } = e.target;
 
@@ -605,15 +770,46 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
         const allConfirmed = requiredConfirmedFields.every(field => confirmedFields[field]);
         if (!allConfirmed) return false;
 
-        // Check other required fields
-        const gstError = validateGST(localData.gstNumber, false);
-        if (gstError) return false;
+        // Validate Udyam Number
+        const udyamError = validateUdyamNumber(localData.udyamNumber);
+        if (udyamError) return false;
+
+
+
+        const validateFields = () => {
+            const newErrors = {};
+
+            if (!localData.sizeOfUnit || !localData.sizeOfUnit.trim()) {
+                newErrors.sizeOfUnit = 'Size of Unit is required';
+            }
+            if (!localData.natureOfActivity || !localData.natureOfActivity.trim()) {
+                newErrors.natureOfActivity = 'Nature of Activity is required';
+            }
+            // ...other validations...
+
+            setErrors(prev => ({ ...prev, ...newErrors }));
+            return Object.keys(newErrors).length === 0;
+        };
+
+
+
+        // Validate Factory Location
+        const locationError = validateFactoryLocation(localData.factoryLocation);
+        if (locationError) return false;
+
+        // Check other required fields  // this is required  temporary commented this 
+        // const gstError = validateGST(localData.gstNumber, false);
+        // if (gstError) return false;
 
         if (!localData.observations.trim()) return false;
         if (!localData.statusUpdate) return false;
 
         // Check stress score
         if (localData.stressScore === '0%') return false;
+
+        if (localData.loansCreditFacilities === 'Yes' && localData.loans.length === 0) return false;
+         const gstError = validateGST(localData.gstNumber, false);
+    if (localData.gstNumber.trim() && gstError) return false;
 
         return true;
     };
@@ -686,6 +882,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                             type="button"
                                                             className="btn btn-outline-success border-0 btn-sm"
                                                             onClick={() => handleConfirmField('nameOfFirm')}
+                                                            disabled={!localData.nameOfFirm.trim()}
                                                         >
                                                             Confirm
                                                         </button>
@@ -716,6 +913,9 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     <i className="bi bi-check-circle-fill"></i>
                                                 </span>
                                             )}
+                                            {/* {errors.udyamNumber && (
+                                                <div className="text-danger small">{errors.udyamNumber}</div>
+                                            )} */}
                                         </div>
                                         <div className="col-12 col-sm-4 col-md-5 col-lg-5 col-xl-6">
                                             <div className="text-start text-sm-end text-xl-end">
@@ -732,7 +932,16 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                         <button
                                                             type="button"
                                                             className="btn btn-outline-success border-0 btn-sm"
-                                                            onClick={() => handleConfirmField('udyamNumber')}
+                                                            onClick={() => {
+                                                                const error = validateUdyamNumber(localData.udyamNumber);
+                                                                if (error) {
+                                                                    setErrors(prev => ({ ...prev, udyamNumber: error }));
+                                                                } else {
+                                                                    setErrors(prev => ({ ...prev, udyamNumber: '' }));
+                                                                    handleConfirmField('udyamNumber');
+                                                                }
+                                                            }}
+                                                            disabled={!localData.udyamNumber.trim()}
                                                         >
                                                             Confirm
                                                         </button>
@@ -745,6 +954,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                         </button>
                                                     </>
                                                 )}
+
                                             </div>
                                         </div>
                                     </div>
@@ -780,6 +990,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                             type="button"
                                                             className="btn btn-outline-success border-0 btn-sm"
                                                             onClick={() => handleConfirmField('sizeOfUnit')}
+                                                            disabled={!localData.sizeOfUnit.trim()}
                                                         >
                                                             Confirm
                                                         </button>
@@ -827,6 +1038,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                             type="button"
                                                             className="btn btn-outline-success border-0 btn-sm"
                                                             onClick={() => handleConfirmField('natureOfActivity')}
+                                                            disabled={!localData.natureOfActivity.trim()}
                                                         >
                                                             Confirm
                                                         </button>
@@ -849,10 +1061,14 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                     <div className="row">
                                         <div className="col-12 col-sm-3 col-md-3 col-lg-3 col-xl-2">
                                             <label className="fs-md fw-600">Factory Location <span className='text-danger'>*</span></label>
+                                            {confirmedFields.factoryLocation && (
+                                                <span className="text-success ms-2">
+                                                    <i className="bi bi-check-circle-fill"></i>
+                                                </span>
+                                            )}
                                         </div>
                                         <div className="col-12 col-sm-5 col-md-4 col-lg-4 col-xl-4">
                                             <div className="fs-md d-flex justify-content-between">
-
                                                 <div>
                                                     <strong>District</strong><br />
                                                     {localData.factoryLocation.district}
@@ -862,14 +1078,13 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     {localData.factoryLocation.mandal}
                                                 </div>
                                                 <div>
-                                                    <strong>address</strong><br />
+                                                    <strong>Address</strong><br />
                                                     {localData.factoryLocation.address}
                                                 </div>
                                             </div>
-                                            {confirmedFields.factoryLocation && (
-                                                <span className="text-success ms-2">
-                                                    <i className="bi bi-check-circle-fill"></i>
-                                                </span>
+
+                                            {errors.factoryLocation && (
+                                                <div className="text-danger small">{errors.factoryLocation}</div>
                                             )}
                                         </div>
                                         <div className="col-12 col-sm-4 col-md-5 col-lg-5 col-xl-6">
@@ -887,7 +1102,19 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                         <button
                                                             type="button"
                                                             className="btn btn-outline-success border-0 btn-sm"
-                                                            onClick={() => handleConfirmField('factoryLocation')}
+                                                            onClick={() => {
+                                                                const error = validateFactoryLocation(localData.factoryLocation);
+                                                                if (error) {
+                                                                    setErrors(prev => ({ ...prev, factoryLocation: error }));
+                                                                } else {
+                                                                    handleConfirmField('factoryLocation');
+                                                                }
+                                                            }}
+                                                            disabled={
+                                                                !localData.factoryLocation.district ||
+                                                                !localData.factoryLocation.mandal ||
+                                                                !localData.factoryLocation.address
+                                                            }
                                                         >
                                                             Confirm
                                                         </button>
@@ -956,7 +1183,9 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <li className="list-group-item px-0">
                                     <div className="row">
                                         <div className="col-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
-                                            <label className="fs-md fw-600">Loans</label>
+                                            <label className="fs-md fw-600">Loans{localData.loansCreditFacilities === "Yes" && (
+                                                <span className='text-danger'>*</span>
+                                            )}</label>
                                         </div>
                                         <div className="col-6 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                             <div className="text-start text-sm-end text-xl-end">
@@ -979,37 +1208,39 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                         <table className="table table-striped table-borderless fs-md">
                                             <thead className="bg-theme text-white">
                                                 <tr>
-                                                    <th className='bg-primary text-white fw-bold'>S.No</th>
-                                                    <th className='bg-primary text-white fw-bold'>Bank/Fis Name</th>
-                                                    <th className='bg-primary text-white fw-bold'>Limit sanctioned (In Rs)</th>
-                                                    <th className='bg-primary text-white fw-bold'>Outstanding Amount (In Rs)</th>
-                                                    <th className='bg-primary text-white fw-bold'>Overdue Amount (In Rs)</th>
-                                                    <th className='bg-primary text-white fw-bold'>Overdue Since (Date)</th>
-                                                    <th className='bg-primary text-white fw-bold'>Action</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>S.No</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Bank/Fis Name</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Nature of loan</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Limit sanctioned (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Outstanding Amount (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Overdue Amount (In Rs)</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Overdue Since (Date)</th>
+                                                    <th className='bg-primary text-white fw-bold border text-center'>Action</th>
                                                 </tr>
 
                                             </thead>
                                             <tbody>
                                                 {localData.loans.map((loan, index) => (
                                                     <tr key={index}>
-                                                        <td>{index + 1}</td>
-                                                        <td>{loan.bankName}</td>
-                                                        <td>{loan.limitSanctioned}</td>
-                                                        <td>{loan.outstandingAmount}</td>
-                                                        <td>{loan.overdueAmount}</td>
-                                                        <td>{loan.overdueSince}</td>
-                                                        <td>
-                                                            <div className="d-flex gap-2">
+                                                        <td className='border text-center'>{index + 1}</td>
+                                                        <td className='border text-center'>{loan.bankName}</td>
+                                                        <td className='border text-center'>{loan.natureOfLoan}</td>
+                                                        <td className='border text-center'>{loan.limitSanctioned}</td>
+                                                        <td className='border text-center'>{loan.outstandingAmount}</td>
+                                                        <td className='border text-center'>{loan.overdueAmount}</td>
+                                                        <td className='border text-center'>{loan.overdueSince}</td>
+                                                        <td className='border text-center' >
+                                                            <div className="d-flex gap-2 text-center">
                                                                 <button
                                                                     type="button"
-                                                                    className="btn btn-sm btn-outline-primary border-0"
+                                                                    className="btn btn-sm btn-outline-primary border-0 text-center"
                                                                     onClick={() => handleEditLoan(index)}
                                                                 >
                                                                     <span className="text-dark fw-bold">Edit</span>
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    className="btn btn-sm btn-outline-danger border-0"
+                                                                    className="btn btn-sm btn-outline-danger border-0 text-center"
                                                                     onClick={() => handleDeleteLoan(index)}
                                                                 >
                                                                     <span className="text-dark fw-bold">Delete</span>
@@ -1041,7 +1272,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                 onChange={handleChange}
                                                 onBlur={handleValidation}
                                             />
-                                            <label htmlFor="gst">GST Number <span className='text-danger'>*</span></label>
+                                            <label htmlFor="gst">GST Number <span className='text-danger'></span></label>
                                             {errors.gstNumber && (
                                                 <div className="invalid-feedback">{errors.gstNumber}</div>
                                             )}
@@ -1064,7 +1295,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                 onChange={handleChange}
 
                                             />
-                                            <label htmlFor="product">Type Of Product</label>
+                                            <label htmlFor="product">Manufacturing Activity</label>
                                         </div>
                                     </div>
                                 </div>
@@ -1088,7 +1319,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
 
                             <div>
                                 <div className="mb-3">
-                                    <label className="fs-md fw-600 mb-1">What are your problems?</label>
+                                    <label className="fs-md fw-600 mb-1">What are the problems that are being faced by the unit?</label>
                                     <div>
                                         <textarea
                                             className="form-control"
@@ -1101,7 +1332,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                     </div>
                                 </div>
                                 <div className="mb-3">
-                                    <label className="fs-md fw-600 mb-1">What is the expected solutions?</label>
+                                    <label className="fs-md fw-600 mb-1">What are the expected solutions?</label>
                                     <div>
                                         <textarea
                                             className="form-control"
@@ -1117,8 +1348,8 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 <div className="mb-3">
                                     <h6 className="fs-md fw-600 mb-1">Stress Score <span className='text-danger'>*</span></h6>
                                     {errors.stressScore && (touchedFields.riskAssessment || formSubmitted) && (
-  <div className="alert alert-danger">{errors.stressScore}</div>
-)}
+                                        <div className="alert alert-danger">{errors.stressScore}</div>
+                                    )}
                                     <div className="accordion mb-2">
                                         <div className="accordion-item">
                                             <h2 className="accordion-header" id="risk-headingOne">
@@ -1381,64 +1612,63 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 </div>
 
                                 {/* Observations Field */}
-                               <div className="mb-3">
-  <label className="fs-md fw-600 mb-1">Observations <span className='text-danger'>*</span></label>
-  <textarea
-    className={`form-control ${
-      (touchedFields.observations || formSubmitted) && !localData.observations.trim() 
-        ? 'is-invalid' 
-        : ''
-    }`}
-    rows="3"
-    placeholder="Write here"
-    name="observations"
-    value={localData.observations}
-    onChange={handleChange}
-    onBlur={() => setTouchedFields(prev => ({ ...prev, observations: true }))}
-  ></textarea>
-  {(touchedFields.observations || formSubmitted) && !localData.observations.trim() && (
-    <div className="invalid-feedback">Observations are required</div>
-  )}
-</div>
+                                <div className="mb-3">
+                                    <label className="fs-md fw-600 mb-1">Observations <span className='text-danger'>*</span></label>
+                                    <textarea
+                                        className={`form-control ${(touchedFields.observations || formSubmitted) && !localData.observations.trim()
+                                            ? 'is-invalid'
+                                            : ''
+                                            }`}
+                                        rows="3"
+                                        placeholder="Write here"
+                                        name="observations"
+                                        value={localData.observations}
+                                        onChange={handleChange}
+                                        onBlur={() => setTouchedFields(prev => ({ ...prev, observations: true }))}
+                                    ></textarea>
+                                    {(touchedFields.observations || formSubmitted) && !localData.observations.trim() && (
+                                        <div className="invalid-feedback">Observations are required</div>
+                                    )}
+                                </div>
                                 {/* Status Update Field */}
                                 <div className="mb-3">
-  <label className="fs-md fw-600 mb-1">Status Update <span className='text-danger'>*</span></label>
-  <div className="mb-2">
-    <div className="form-check form-check-inline">
-      <input
-        className="form-check-input"
-        type="radio"
-        name="statusUpdate"
-        id="consider"
-        value="consider"
-        checked={localData.statusUpdate === 'consider'}
-        onChange={handleChange}
-        onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
-      />
-      <label className="form-check-label fs-md" htmlFor="consider">
-        Application can be considered
-      </label>
-    </div>
-    <div className="form-check form-check-inline">
-      <input
-        className="form-check-input"
-        type="radio"
-        name="statusUpdate"
-        id="notconsider"
-        value="notconsider"
-        checked={localData.statusUpdate === 'notconsider'}
-        onChange={handleChange}
-        onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
-      />
-      <label className="form-check-label fs-md" htmlFor="notconsider">
-        Application cannot be considered
-      </label>
-    </div>
-  </div>
-  {(touchedFields.statusUpdate || formSubmitted) && !localData.statusUpdate && (
-    <div className="text-danger">Please select a status</div>
-  )}
-</div>
+                                    <label className="fs-md fw-600 mb-1">Status Update <span className='text-danger'>*</span></label>
+                                    <div className="mb-2">
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                className="form-check-input"
+                                                type="radio"
+                                                name="statusUpdate"
+                                                id="consider"
+                                                value="consider"
+                                                checked={localData.statusUpdate === 'consider'}
+                                                onChange={handleChange}
+                                                onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
+                                            />
+                                            <label className="form-check-label fs-md" htmlFor="consider">
+                                                Application can be considered
+                                            </label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                className="form-check-input"
+                                                type="radio"
+                                                name="statusUpdate"
+                                                id="notconsider"
+                                                value="notconsider"
+                                                checked={localData.statusUpdate === 'notconsider'}
+                                                onChange={handleChange}
+                                                onBlur={() => setTouchedFields(prev => ({ ...prev, statusUpdate: true }))}
+                                            />
+                                            <label className="form-check-label fs-md" htmlFor="notconsider">
+                                                Application cannot be considered
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {(touchedFields.statusUpdate || formSubmitted) && !localData.statusUpdate && (
+                                        <div className="text-danger">Please select a status</div>
+                                    )}
+                                </div>
 
                             </div>
                         </div>
@@ -1451,7 +1681,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                         className="next btn btn-primary float-end"
                         value="Submit for Manager Approval"
                         onClick={handleSubmit}
-                        disabled={btndisable || isSubmitting}
+                        disabled={btndisable || isSubmitting|| !localData.statusUpdate}
                     />
 
                     {/* Modals */}
@@ -1476,13 +1706,26 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     <div className="form-floating mb-3">
                                                         <input
                                                             type="text"
-                                                            className="form-control"
+                                                            className={`form-control ${errors.nameOfFirm ? 'is-invalid' : ''}`}
                                                             id="Firm"
                                                             placeholder=""
                                                             value={tempFieldValue}
-                                                            onChange={(e) => setTempFieldValue(e.target.value)}
+                                                            onChange={(e) => {
+                                                                setTempFieldValue(e.target.value);
+                                                                if (e.target.value.trim()) {
+                                                                    setErrors(prev => ({ ...prev, nameOfFirm: '' }));
+                                                                }
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (!tempFieldValue.trim()) {
+                                                                    setErrors(prev => ({ ...prev, nameOfFirm: 'Name Of Firm is required' }));
+                                                                }
+                                                            }}
                                                         />
                                                         <label htmlFor="Firm">Name of Firm</label>
+                                                        {errors.nameOfFirm && (
+                                                            <div className="invalid-feedback">{errors.nameOfFirm}</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1498,7 +1741,15 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary"
-                                                onClick={() => handleUpdateField('nameOfFirm')}
+                                                onClick={() => {
+                                                    if (!tempFieldValue.trim()) {
+                                                        setErrors(prev => ({ ...prev, nameOfFirm: 'Name Of Firm is required' }));
+                                                        return;
+                                                    }
+                                                    setErrors(prev => ({ ...prev, nameOfFirm: '' }));
+                                                    handleUpdateField('nameOfFirm');
+                                                }}
+                                                disabled={!tempFieldValue.trim()}
                                             >
                                                 Update
                                             </button>
@@ -1530,13 +1781,20 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     <div className="form-floating mb-3">
                                                         <input
                                                             type="text"
-                                                            className="form-control"
+                                                            className={`form-control ${errors.udyamNumber ? 'is-invalid' : ''}`}
                                                             id="udyam"
                                                             placeholder=""
                                                             value={tempFieldValue}
-                                                            onChange={(e) => setTempFieldValue(e.target.value)}
+                                                            onChange={e => {
+                                                                setTempFieldValue(e.target.value);
+                                                                const error = validateUdyamNumber(e.target.value);
+                                                                setErrors(prev => ({ ...prev, udyamNumber: error }));
+                                                            }}
                                                         />
                                                         <label htmlFor="udyam">Udyam Number</label>
+                                                        {errors.udyamNumber && (
+                                                            <div className="invalid-feedback">{errors.udyamNumber}</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1552,7 +1810,10 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary"
-                                                onClick={() => handleUpdateField('udyamNumber')}
+                                                onClick={() => {
+                                                    handleUpdateField('udyamNumber');
+                                                }}
+                                                disabled={!!errors.udyamNumber || !tempFieldValue}
                                             >
                                                 Update
                                             </button>
@@ -1582,16 +1843,28 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                         <form>
                                             <div className="row">
                                                 <div className="col-12">
-                                                    <div className="form-floating mb-3">
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
+                                                    <div className="mb-3">
+                                                        <label htmlFor="size" className="form-label">Size of Unit</label>
+                                                        <select
+                                                            className={`form-select ${errors.sizeOfUnit ? 'is-invalid' : ''}`}
                                                             id="size"
-                                                            placeholder=""
                                                             value={tempFieldValue}
                                                             onChange={(e) => setTempFieldValue(e.target.value)}
-                                                        />
-                                                        <label htmlFor="size">Size of Unit</label>
+                                                            onBlur={() => {
+                                                                if (!tempFieldValue) {
+                                                                    setErrors(prev => ({ ...prev, sizeOfUnit: 'Size of Unit is required' }));
+                                                                } else {
+                                                                    setErrors(prev => ({ ...prev, sizeOfUnit: '' }));
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="">Select Size</option>
+                                                            <option value="Micro">Micro</option>
+                                                            <option value="Small">Small</option>
+                                                            <option value="Medium">Medium</option>
+                                                        </select>
+                                                        {errors.sizeOfUnit && <div className="invalid-feedback">{errors.sizeOfUnit}</div>}
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -1607,7 +1880,15 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary"
-                                                onClick={() => handleUpdateField('sizeOfUnit')}
+                                                onClick={() => {
+                                                    if (!tempFieldValue) {
+                                                        setErrors(prev => ({ ...prev, sizeOfUnit: 'sizeOfUnit is required' }));
+                                                        return;
+                                                    }
+                                                    setErrors(prev => ({ ...prev, sizeOfUnit: '' }));
+                                                    handleUpdateField('sizeOfUnit');
+                                                }}
+                                                disabled={!tempFieldValue}
                                             >
                                                 Update
                                             </button>
@@ -1636,16 +1917,27 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                         <form>
                                             <div className="row">
                                                 <div className="col-12">
-                                                    <div className="form-floating mb-3">
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
+                                                    <div className="mb-3">
+                                                        <label htmlFor="nature" className="form-label">Nature of Activity</label>
+                                                        <select
+                                                            className={`form-select ${errors.natureOfActivity ? 'is-invalid' : ''}`}
                                                             id="nature"
-                                                            placeholder=""
                                                             value={tempFieldValue}
                                                             onChange={(e) => setTempFieldValue(e.target.value)}
-                                                        />
-                                                        <label htmlFor="nature">Nature of Activity</label>
+                                                            onBlur={() => {
+                                                                if (!tempFieldValue) {
+                                                                    setErrors(prev => ({ ...prev, natureOfActivity: 'Nature of Activity is required' }));
+                                                                } else {
+                                                                    setErrors(prev => ({ ...prev, natureOfActivity: '' }));
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="">Select Nature</option>
+                                                            <option value="manufacturing">Manufacturing</option>
+                                                            <option value="service">Service</option>
+                                                            <option value="trading">Trading</option>
+                                                        </select>
+                                                        {errors.natureOfActivity && <div className="invalid-feedback">{errors.natureOfActivity}</div>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1661,7 +1953,15 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary"
-                                                onClick={() => handleUpdateField('natureOfActivity')}
+                                                onClick={() => {
+                                                    if (!tempFieldValue) {
+                                                        setErrors(prev => ({ ...prev, natureOfActivity: 'Nature of Activity is required' }));
+                                                        return;
+                                                    }
+                                                    setErrors(prev => ({ ...prev, natureOfActivity: '' }));
+                                                    handleUpdateField('natureOfActivity');
+                                                }}
+                                                disabled={!tempFieldValue}
                                             >
                                                 Update
                                             </button>
@@ -1682,6 +1982,7 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             type="button"
                                             className="btn-close text-white fs-4 p-0"
                                             onClick={() => setShowFactoryLocationModal(false)}
+
                                         >
                                             <span className="bi bi-x"></span>
                                         </button>
@@ -1691,20 +1992,21 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <div className="row">
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="mb-3">
-                                                        <label htmlFor="district" className="form-label">District</label>
+                                                        <label htmlFor="district" className="form-label">District <span className="text-danger">*</span></label>
                                                         <select
-                                                            className="form-select"
+                                                            className={`form-select ${!tempFieldValue.district && factoryModalTouched.district ? 'is-invalid' : ''}`}
                                                             id="district"
                                                             value={tempFieldValue.district}
-                                                            onChange={(e) => {
+                                                            onChange={e => {
                                                                 const selectedDistrict = e.target.value;
                                                                 setTempFieldValue({
                                                                     ...tempFieldValue,
                                                                     district: selectedDistrict,
-                                                                    mandal: '' // Reset mandal when district changes
+                                                                    mandal: ''
                                                                 });
                                                                 fetchMandals(selectedDistrict);
                                                             }}
+                                                            onBlur={() => setFactoryModalTouched(prev => ({ ...prev, district: true }))}
                                                         >
                                                             <option value="">Select District</option>
                                                             {districts.map((district) => (
@@ -1713,19 +2015,23 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                                 </option>
                                                             ))}
                                                         </select>
+                                                        {!tempFieldValue.district && factoryModalTouched.district && (
+                                                            <div className="invalid-feedback">District is required</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="mb-3">
-                                                        <label htmlFor="mandal" className="form-label">Mandal</label>
+                                                        <label htmlFor="mandal" className="form-label">Mandal <span className="text-danger">*</span></label>
                                                         <select
-                                                            className="form-select"
+                                                            className={`form-select ${!tempFieldValue.mandal && factoryModalTouched.mandal ? 'is-invalid' : ''}`}
                                                             id="mandal"
                                                             value={tempFieldValue.mandal}
-                                                            onChange={(e) => setTempFieldValue({
+                                                            onChange={e => setTempFieldValue({
                                                                 ...tempFieldValue,
                                                                 mandal: e.target.value
                                                             })}
+                                                            onBlur={() => setFactoryModalTouched(prev => ({ ...prev, mandal: true }))}
                                                             disabled={!tempFieldValue.district || mandals.length === 0}
                                                         >
                                                             <option value="">Select Mandal</option>
@@ -1735,21 +2041,29 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                                 </option>
                                                             ))}
                                                         </select>
+                                                        {!tempFieldValue.mandal && factoryModalTouched.mandal && (
+                                                            <div className="invalid-feedback">Mandal is required</div>
+                                                        )}
+
                                                     </div>
                                                 </div>
                                                 <div className="col-12">
-                                                    <div className="form-floating mb-3">
+                                                    <div className="mb-3">
+                                                        <label htmlFor="address" className="form-label">Address <span className="text-danger">*</span></label>
                                                         <textarea
-                                                            className="form-control"
+                                                            className={`form-control ${!tempFieldValue.address && factoryModalTouched.address ? 'is-invalid' : ''}`}
                                                             id="address"
                                                             placeholder=""
                                                             value={tempFieldValue.address}
-                                                            onChange={(e) => setTempFieldValue({
+                                                            onChange={e => setTempFieldValue({
                                                                 ...tempFieldValue,
                                                                 address: e.target.value
                                                             })}
+                                                            onBlur={() => setFactoryModalTouched(prev => ({ ...prev, address: true }))}
                                                         ></textarea>
-                                                        <label htmlFor="address">Address</label>
+                                                        {!tempFieldValue.address && factoryModalTouched.address && (
+                                                            <div className="invalid-feedback">Address is required</div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1765,7 +2079,14 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                             <button
                                                 type="button"
                                                 className="btn btn-primary"
-                                                onClick={() => handleUpdateField('factoryLocation')}
+                                                onClick={() => {
+                                                    if (!tempFieldValue.district || !tempFieldValue.mandal || !tempFieldValue.address) {
+                                                        setFormSubmitted(true);
+                                                    } else {
+                                                        handleUpdateField('factoryLocation');
+                                                    }
+                                                }}
+                                                disabled={!tempFieldValue.district || !tempFieldValue.mandal || !tempFieldValue.address}
                                             >
                                                 Update
                                             </button>
@@ -1774,6 +2095,8 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                 </div>
                             </div>
                         </div>
+
+
                     )}
 
                     {showCreditModal && (
@@ -1880,70 +2203,134 @@ const PreliminaryAssessment = ({ formData, updateFormData, nextStep }) => {
                                                     <div className="form-floating mb-3">
                                                         <input
                                                             type="text"
-                                                            className="form-control"
+                                                            className={`form-control ${loanErrors.bankName ? 'is-invalid' : ''}`}
                                                             id="bankName"
                                                             placeholder=""
                                                             name="bankName"
                                                             value={newLoan.bankName}
                                                             onChange={handleLoanChange}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    bankName: validateLoan({ ...newLoan, bankName: e.target.value }).bankName
+                                                                }));
+                                                            }}
                                                         />
-                                                        <label htmlFor="bankName">Bank/FI Name</label>
+                                                        <label htmlFor="bankName">Bank/Fi Name</label>
+                                                        {loanErrors.bankName && <div className="invalid-feedback">{loanErrors.bankName}</div>}
+                                                    </div>
+                                                </div>
+                                                <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
+                                                    <div className="form-floating mb-3">
+                                                        <select
+                                                            className={`form-select ${loanErrors.natureOfLoan ? 'is-invalid' : ''}`}
+                                                            id="natureOfLoan"
+                                                            name="natureOfLoan"
+                                                            value={newLoan.natureOfLoan || ""}
+                                                            onChange={handleLoanChange}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    natureOfLoan: validateLoan({ ...newLoan, natureOfLoan: e.target.value }).natureOfLoan
+                                                                }));
+                                                            }}
+                                                        >
+                                                            <option value="">Select Nature of Loan</option>
+                                                            <option value="Short-term Loans">Short-term Loans</option>
+                                                            <option value="Medium-term Loans">Medium-term Loans</option>
+                                                            <option value="Long-term Loans">Long-term Loans</option>
+                                                        </select>
+                                                        <label htmlFor="natureOfLoan">Nature of Loan</label>
+                                                        {loanErrors.natureOfLoan && <div className="invalid-feedback">{loanErrors.natureOfLoan}</div>}
                                                     </div>
                                                 </div>
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="form-floating mb-3">
                                                         <input
-                                                            type="text"
-                                                            className="form-control"
+                                                            type="number"
+                                                            min="0"
+                                                            className={`form-control ${loanErrors.limitSanctioned ? 'is-invalid' : ''}`}
                                                             id="limitSanctioned"
                                                             placeholder=""
                                                             name="limitSanctioned"
                                                             value={newLoan.limitSanctioned}
                                                             onChange={handleLoanChange}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    limitSanctioned: validateLoan({ ...newLoan, limitSanctioned: e.target.value }).limitSanctioned
+                                                                }));
+                                                            }}
                                                         />
                                                         <label htmlFor="limitSanctioned">Limit Sanctioned (In Rs)</label>
+                                                        {loanErrors.limitSanctioned && <div className="invalid-feedback">{loanErrors.limitSanctioned}</div>}
                                                     </div>
                                                 </div>
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="form-floating mb-3">
                                                         <input
-                                                            type="text"
-                                                            className="form-control"
+                                                            type="number"
+                                                            min="0"
+                                                            className={`form-control ${loanErrors.outstandingAmount ? 'is-invalid' : ''}`}
                                                             id="outstandingAmount"
                                                             placeholder=""
                                                             name="outstandingAmount"
                                                             value={newLoan.outstandingAmount}
                                                             onChange={handleLoanChange}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    outstandingAmount: validateLoan({ ...newLoan, outstandingAmount: e.target.value }).outstandingAmount,
+                                                                    overdueAmount: validateLoan({ ...newLoan, outstandingAmount: e.target.value, overdueAmount: newLoan.overdueAmount }).overdueAmount // To revalidate overdueAmount if outstanding changes
+                                                                }));
+                                                            }}
                                                         />
                                                         <label htmlFor="outstandingAmount">Outstanding Amount (In Rs)</label>
+                                                        {loanErrors.outstandingAmount && <div className="invalid-feedback">{loanErrors.outstandingAmount}</div>}
                                                     </div>
                                                 </div>
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="form-floating mb-3">
                                                         <input
-                                                            type="text"
-                                                            className="form-control"
+                                                            type="number"
+                                                            min="0"
+                                                            className={`form-control ${loanErrors.overdueAmount ? 'is-invalid' : ''}`}
                                                             id="overdueAmount"
                                                             placeholder=""
                                                             name="overdueAmount"
                                                             value={newLoan.overdueAmount}
                                                             onChange={handleLoanChange}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    overdueAmount: validateLoan({ ...newLoan, overdueAmount: e.target.value }).overdueAmount
+                                                                }));
+                                                            }}
                                                         />
                                                         <label htmlFor="overdueAmount">Overdue Amount (In Rs)</label>
+                                                        {loanErrors.overdueAmount && <div className="invalid-feedback">{loanErrors.overdueAmount}</div>}
                                                     </div>
                                                 </div>
                                                 <div className="col-12 col-sm-6 col-md-6 col-lg-6 col-xl-6">
                                                     <div className="form-floating mb-3">
                                                         <input
                                                             type="date"
-                                                            className="form-control"
+                                                            className={`form-control ${loanErrors.overdueSince ? 'is-invalid' : ''}`}
                                                             id="overdueSince"
                                                             placeholder=""
                                                             name="overdueSince"
                                                             value={newLoan.overdueSince}
                                                             onChange={handleLoanChange}
+                                                            max={new Date().toISOString().split('T')[0]}
+                                                            onBlur={e => {
+                                                                setLoanErrors(prev => ({
+                                                                    ...prev,
+                                                                    overdueSince: validateLoan({ ...newLoan, overdueSince: e.target.value }).overdueSince
+                                                                }));
+                                                            }}
                                                         />
                                                         <label htmlFor="overdueSince">Overdue Since (Date)</label>
+                                                        {loanErrors.overdueSince && <div className="invalid-feedback">{loanErrors.overdueSince}</div>}
                                                     </div>
                                                 </div>
                                             </div>

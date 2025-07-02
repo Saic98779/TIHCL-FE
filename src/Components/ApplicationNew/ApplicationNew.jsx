@@ -20,7 +20,7 @@ const ApplicationNew = () => {
     setError(null);
 
     try {
-      const res = await NewApplication(page-1, pageSize);
+      const res = await NewApplication(page - 1, pageSize);
       const data = Array.isArray(res?.data) ? res.data : [];
       setApplications(data);
       setTotalItems(res.totalElements || 0);
@@ -56,17 +56,17 @@ const ApplicationNew = () => {
   };
 
   const handleSelectApplication = (application) => {
-    navigate('/Status', { 
-      state: { 
+    navigate('/Status', {
+      state: {
         application,
         initialStep: 1
-      } 
+      }
     });
   };
 
   return (
     <>
-      <Header className="mb-4"/>
+      <Header className="mb-4" />
       <div className="application-new-container mt-5">
         <div className="card">
           <div className="card-header bg-theme text-white d-flex justify-content-between align-items-center">
@@ -89,14 +89,14 @@ const ApplicationNew = () => {
               <>
                 <div className="table-responsive">
                   <table className="table table-hover w-100">
-                    <thead className="table-light">
+                    <thead className="table-light text-center">
                       <tr>
-                        <th>App No.</th>
-                        <th>Enterprise</th>
-                        <th>Promoter</th>
-                        <th>Contact</th>
-                        <th>Date</th>
-                        <th>Action</th>
+                        <th className="text-center">App No.</th>
+                        <th className="text-center">Enterprise</th>
+                        <th className="text-center">Promoter</th>
+                        <th className="text-center">Contact</th>
+                        <th className="text-center">Date</th>
+                        <th className="text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -108,13 +108,13 @@ const ApplicationNew = () => {
                           <td>{app.contactNumber || "N/A"}</td>
                           <td>{app.createdOn ? new Date(app.createdOn).toLocaleDateString() : "N/A"}</td>
                           <td>
-                            <button 
+                            <button
                               className="btn btn-sm btn-outline-primary"
                               onClick={() => handleSelectApplication(app)}
                             >
                               Select
                             </button>
-                            
+
                           </td>
                         </tr>
                       ))}

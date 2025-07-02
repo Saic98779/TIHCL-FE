@@ -134,12 +134,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-
 import PreliminaryAssessment from '../Components/Status/PreliminaryAssessment';
 import ManagerApproval1 from '../Components/Status/ManagerApproval1';
 import UnitVisit from '../Components/Status/UnitVisit';
 import DiagnosticReport from '../Components/Status/DiagnosticReport';
 import Header from "../Components/ExecutiveHeader/Header";
+
+
 
 // Import remaining steps as needed
 // import ManagerApproval2 from './ManagerApproval2';
@@ -162,19 +163,23 @@ const statusToStepMap = {
   "sanctioned_details": 9,
   "manager_approval_3": 10,
   "disbursement_details": 11,
+  "rejected_manager_approval_1":1
 };
 
 const FormWizard = () => {
   const { search } = useLocation();
   const queryParams = new URLSearchParams(search);
   const statusParam = queryParams.get("Status");
+  //console.log("satkfskdfnk",statusParam)
 
   const [currentStep, setCurrentStep] = useState(1);
 
   useEffect(() => {
     if (statusParam) {
       const step = statusToStepMap[statusParam.toLowerCase()];
+      //console.log("satkfskdfnk",step)
       if (step) setCurrentStep(step+1);
+      
     }
   }, [statusParam]);
 
@@ -198,7 +203,7 @@ const FormWizard = () => {
   const renderStep = () => {
     switch (currentStep) {
       case 1: return <PreliminaryAssessment formData={formData} updateFormData={updateFormData} nextStep={nextStep} />;
-      case 2: return <ManagerApproval1 formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
+      case 2: return <ManagerApproval1 formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} status={statusParam}/>;
       case 3: return <UnitVisit formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       case 4: return <DiagnosticReport formData={formData} updateFormData={updateFormData} nextStep={nextStep} prevStep={prevStep} />;
       // Continue other steps similarly...

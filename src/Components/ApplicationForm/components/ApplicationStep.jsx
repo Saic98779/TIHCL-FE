@@ -9,9 +9,18 @@ const ApplicationStep = memo(({
     onPrev,
     onSubmit,
     onAddCredit,
+    onEditCredit,      // <-- add this
+    onDeleteCredit,    // <-- add this
     isSubmitting,
     submitError
 }) => {
+
+    const operatingDifficultiesArray =
+        Array.isArray(formData.operatingDifficulties)
+            ? formData.operatingDifficulties
+            : (formData.operatingDifficulties
+                ? formData.operatingDifficulties.split(', ')
+                : []);
     return (
         <div className="step step-2">
             <div className="card mb-3">
@@ -146,34 +155,112 @@ const ApplicationStep = memo(({
                             {formData.operationalStatus === 'operationalYes' && (
                                 <div className="row mb-3">
                                     <div className="col-12 col-sm-6 col-md-6 col-lg-4">
-                                        <div className="form-floating mb-3">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="operatingSatisfactorily"
-                                                name="operatingSatisfactorily"
-                                                placeholder="Operating"
-                                                value={formData.operatingSatisfactorily}
-                                                onChange={onChange}
-                                                onBlur={onBlur}
-                                            />
-                                            <label htmlFor="operatingSatisfactorily">Operating Satisfactorily</label>
+                                        <div className="mb-3">
+                                            <label className="form-label fs-md fw-600 mb-1">Operating Satisfactorily? <span className='text-danger'>*</span></label>
+                                            {errors.operatingSatisfactorily && (
+                                                <div className="text-danger small">{errors.operatingSatisfactorily}</div>
+                                            )}
+                                            <div className="d-flex flex-wrap gap-2">
+                                                <div className="form-check">
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="radio"
+                                                        name="operatingSatisfactorily"
+                                                        id="operatingSatisfactorily-yes"
+                                                        value="yes"
+                                                        checked={formData.operatingSatisfactorily === 'yes'}
+                                                        onChange={onRadioChange}
+                                                        onBlur={onBlur}
+                                                    />
+                                                    <label className="form-check-label fs-md" htmlFor="operatingSatisfactorily-yes">
+                                                        Yes
+                                                    </label>
+                                                </div>
+                                                <div className="form-check">
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="radio"
+                                                        name="operatingSatisfactorily"
+                                                        id="operatingSatisfactorily-no"
+                                                        value="no"
+                                                        checked={formData.operatingSatisfactorily === 'no'}
+                                                        onChange={onRadioChange}
+                                                        onBlur={onBlur}
+                                                    />
+                                                    <label className="form-check-label fs-md" htmlFor="operatingSatisfactorily-no">
+                                                        No
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {/* Checkbox Dropdown for Operating Difficulties */}
                                     <div className="col-12 col-sm-6 col-md-6 col-lg-4">
-                                        <div className="form-floating">
-                                            <select
-                                                className="form-select"
-                                                id="operatingDifficulties"
-                                                name="operatingDifficulties"
-                                                value={formData.operatingDifficulties}
-                                                onChange={onChange}
-                                                onBlur={onBlur}
-                                            >
-                                                <option value="">Select</option>
-                                                <option value="Operating 1">Operating 1</option>
-                                            </select>
-                                            <label htmlFor="operatingDifficulties">Operating with difficulties</label>
+                                        <div className="form-group">
+                                            <label className="form-label fw-600">
+                                                Operating with difficulties
+                                                {formData.operatingSatisfactorily === 'no' && <span className='text-danger'>*</span>}
+                                            </label>
+
+                                            <div className="dropdown">
+                                                <button
+                                                    className={`form-control text-start dropdown-toggle ${formData.operatingSatisfactorily === 'no' &&
+                                                        operatingDifficultiesArray.length === 0 ? 'is-invalid' : ''
+                                                        }`}
+                                                    type="button"
+                                                    id="operatingDifficultiesDropdown"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false"
+                                                    style={{
+                                                        minHeight: '58px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between'
+                                                    }}
+                                                    disabled={formData.operatingSatisfactorily === 'yes'}
+                                                >
+                                                    {operatingDifficultiesArray.length > 0
+                                                        ? operatingDifficultiesArray.join(', ')
+                                                        : 'Select difficulties'}
+                                                </button>
+
+                                                <ul className="dropdown-menu p-3" aria-labelledby="operatingDifficultiesDropdown" style={{ width: '100%' }}>
+                                                    {['Financial', 'Supply Chain', 'Labor', 'Market Demand', 'Regulatory', 'Other'].map((difficulty) => (
+                                                        <li key={difficulty} className="mb-2">
+                                                            <div className="form-check">
+                                                                <input
+                                                                    className="form-check-input"
+                                                                    type="checkbox"
+                                                                    id={`difficulty-${difficulty}`}
+                                                                    checked={operatingDifficultiesArray.includes(difficulty)}
+                                                                    onChange={(e) => {
+                                                                        let updatedDifficulties;
+                                                                        if (e.target.checked) {
+                                                                            updatedDifficulties = [...operatingDifficultiesArray, difficulty];
+                                                                        } else {
+                                                                            updatedDifficulties = operatingDifficultiesArray.filter(d => d !== difficulty);
+                                                                        }
+                                                                        onChange({
+                                                                            target: {
+                                                                                name: 'operatingDifficulties',
+                                                                                value: updatedDifficulties
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                />
+                                                                <label className="form-check-label" htmlFor={`difficulty-${difficulty}`}>
+                                                                    {difficulty}
+                                                                </label>
+                                                            </div>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            {formData.operatingSatisfactorily === 'no' && errors.operatingDifficulties && (
+                                                <div className="invalid-feedback d-block">{errors.operatingDifficulties}</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -191,8 +278,9 @@ const ApplicationStep = memo(({
                                                 value={formData.notOperatingSince}
                                                 onChange={onChange}
                                                 onBlur={onBlur}
+                                                max={new Date().toISOString().split('T')[0]}
                                             />
-                                            <label htmlFor="notOperatingSince">Since when?</label>
+                                            <label htmlFor="notOperatingSince">Since when? <span className='text-danger'>*</span></label>
                                             {errors.notOperatingSince && (
                                                 <div className="invalid-feedback">{errors.notOperatingSince}</div>
                                             )}
@@ -210,7 +298,7 @@ const ApplicationStep = memo(({
                                                 onBlur={onBlur}
                                                 rows="3"
                                             />
-                                            <label htmlFor="notOperatingReasons">Reasons for not operating</label>
+                                            <label htmlFor="notOperatingReasons">Reasons for not operating <span className='text-danger'>*</span></label>
                                             {errors.notOperatingReasons && (
                                                 <div className="invalid-feedback">{errors.notOperatingReasons}</div>
                                             )}
@@ -218,7 +306,7 @@ const ApplicationStep = memo(({
                                     </div>
                                     <div className="col-12 col-sm-6 col-md-6 col-lg-4">
                                         <div className="mb-3">
-                                            <label className="form-label fs-md fw-600 mb-1">Whether intention to restart</label>
+                                            <label className="form-label fs-md fw-600 mb-1">Whether intention to restart <span className='text-danger'>*</span></label>
                                             {errors.restartIntention && (
                                                 <div className="text-danger small">{errors.restartIntention}</div>
                                             )}
@@ -260,7 +348,7 @@ const ApplicationStep = memo(({
                                         <div className="form-floating mb-3">
                                             <input
                                                 type="text"
-                                                className={`form-control ${errors.restartSupport ? 'is-invalid' : ''}`}
+                                                className={`form-control ${formData.restartIntention === 'restartYes' && errors.restartSupport ? 'is-invalid' : ''}`}
                                                 id="restartSupport"
                                                 name="restartSupport"
                                                 placeholder="What support do you need to restart?"
@@ -268,8 +356,11 @@ const ApplicationStep = memo(({
                                                 onChange={onChange}
                                                 onBlur={onBlur}
                                             />
-                                            <label htmlFor="restartSupport">What support do you need to restart?</label>
-                                            {errors.restartSupport && (
+                                            <label htmlFor="restartSupport">
+                                                What support do you need to restart?
+                                                {formData.restartIntention === 'restartYes' && <span className='text-danger'>*</span>}
+                                            </label>
+                                            {formData.restartIntention === 'restartYes' && errors.restartSupport && (
                                                 <div className="invalid-feedback">{errors.restartSupport}</div>
                                             )}
                                         </div>
@@ -283,7 +374,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Existing Credit with facilities with bank/NBFC/FI & SFC ? <span className='text-danger'>*</span></label>
+                                <label className="form-label fs-md fw-600 mb-1">Existing Credit facilities with BANK/NBFC/FI? <span className='text-danger'>*</span></label>
                                 {errors.hasCreditFacilities && (
                                     <div className="text-danger small">{errors.hasCreditFacilities}</div>
                                 )}
@@ -333,8 +424,8 @@ const ApplicationStep = memo(({
                                         </button>
                                     </div>
                                     {formData.creditFacilities.length > 0 ? (
-                                        <div className="table-responsive ">
-                                            <table className="table table-bordered fs-md ">
+                                        <div className="table-responsive">
+                                            <table className="table table-bordered fs-md">
                                                 <thead className="bg-theme text-white">
                                                     <tr>
                                                         <th className='bg-primary text-white fw-bold'>S.No</th>
@@ -343,17 +434,36 @@ const ApplicationStep = memo(({
                                                         <th className='bg-primary text-white fw-bold'>Outstanding Amount (In Rs)</th>
                                                         <th className='bg-primary text-white fw-bold'>Overdue Amount (In Rs)</th>
                                                         <th className='bg-primary text-white fw-bold'>Overdue Since (Date)</th>
+                                                        <th className='bg-primary text-white fw-bold'>Nature of Loan</th>
+                                                        <th className='bg-primary text-white fw-bold'>Action</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {formData.creditFacilities.map((facility, index) => (
                                                         <tr key={`credit-facility-${index}`}>
-                                                            <td>{index + 1}</td>
-                                                            <td>{facility.bankName}</td>
-                                                            <td>{facility.limitSanctioned}</td>
-                                                            <td>{facility.outstandingAmount}</td>
-                                                            <td>{facility.overdueAmount}</td>
-                                                            <td>{facility.overdueSince || 'N/A'}</td>
+                                                            <td className='text-center'>{index + 1}</td>
+                                                            <td className='text-center'>{facility.bankName}</td>
+                                                            <td className='text-center'>{facility.limitSanctioned}</td>
+                                                            <td className='text-center'>{facility.outstandingAmount}</td>
+                                                            <td className='text-center'>{facility.overdueAmount}</td>
+                                                            <td className='text-center'>{facility.overdueSince || 'N/A'}</td>
+                                                            <td className='text-center'>{facility.natureOfLoan || 'N/A'}</td>
+                                                            <td className='text-center'>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-warning btn-sm me-2"
+                                                                    onClick={() => onEditCredit(index)}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-danger btn-sm"
+                                                                    onClick={() => onDeleteCredit(index)}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
@@ -371,7 +481,7 @@ const ApplicationStep = memo(({
                                             <div className="text-danger small">{errors.creditStatus}</div>
                                         )}
                                         <div className="d-flex flex-wrap gap-2">
-                                            {['Regular', 'SMA', 'NPA'].map((status) => (
+                                            {['Standard', 'SMA', 'NPA'].map((status) => (
                                                 <div className="form-check" key={`credit-status-${status}`}>
                                                     <input
                                                         className="form-check-input"
@@ -422,7 +532,7 @@ const ApplicationStep = memo(({
                     <div className="row">
                         <div className="col-12">
                             <div className="mb-3">
-                                <label className="form-label fs-md fw-600 mb-1">Investment Subsidy / other incentives Sanctioned Govt <span className='text-danger'>*</span></label>
+                                <label className="form-label fs-md fw-600 mb-1">Any Sanctioned subsidiary / Incentive by the state Government <span className='text-danger'>*</span></label>
                                 {errors.investmentSubsidy && (
                                     <div className="text-danger small">{errors.investmentSubsidy}</div>
                                 )}
@@ -530,7 +640,7 @@ const ApplicationStep = memo(({
                                     <div className="text-danger small">{errors.accountsMaintenance}</div>
                                 )}
                                 <div className="d-flex flex-wrap gap-2">
-                                    {['Accountant', 'Software'].map((method) => (
+                                    {['Manual', 'Software'].map((method) => (
                                         <div className="form-check" key={`accounts-${method}`}>
                                             <input
                                                 className="form-check-input"
@@ -543,7 +653,7 @@ const ApplicationStep = memo(({
                                                 onBlur={onBlur}
                                             />
                                             <label className="form-check-label fs-md" htmlFor={`accountsMaintenance-${method}`}>
-                                                {method === 'Software' ? 'Software (using computer)' : method}
+                                                {method === 'Software' ? 'Any software application' : method}
                                             </label>
                                         </div>
                                     ))}
@@ -591,8 +701,29 @@ const ApplicationStep = memo(({
                             disabled={
                                 ![
                                     'enterpriseCategory', 'natureActivity', 'sector', 'operationalStatus',
-                                    'accountsMaintenance', 'hasCreditFacilities', 'investmentSubsidy'
+                                    'accountsMaintenance', 'hasCreditFacilities', 'investmentSubsidy', 'creditStatus'
                                 ].every(field => formData[field]?.toString().trim() && !errors[field])
+                                ||
+                                (
+                                    formData.investmentSubsidy === 'yes' && (
+                                        !formData.subsidyAmountSanctioned?.toString().trim() || errors.subsidyAmountSanctioned ||
+                                        !formData.subsidyAmountReleased?.toString().trim() || errors.subsidyAmountReleased ||
+                                        !formData.subsidyAmountToBeReleased?.toString().trim() || errors.subsidyAmountToBeReleased
+                                    )
+                                )
+                                ||
+                                (formData.operationalStatus === 'operationalYes' &&
+                                    (!formData.operatingSatisfactorily || errors.operatingSatisfactorily ||
+                                        (formData.operatingSatisfactorily === 'no' &&
+                                            (!formData.operatingDifficulties || formData.operatingDifficulties.length === 0 || errors.operatingDifficulties))))
+                                ||
+                                (formData.operationalStatus === 'operationalNo' &&
+                                    (!formData.notOperatingSince || errors.notOperatingSince ||
+                                        !formData.notOperatingReasons || errors.notOperatingReasons ||
+                                        !formData.restartIntention || errors.restartIntention ||
+                                        (formData.restartIntention === 'restartYes' &&
+                                            (!formData.restartSupport || errors.restartSupport)))
+                                )
                             }
                         >
                             {isSubmitting ? (
@@ -621,3 +752,5 @@ const ApplicationStep = memo(({
 });
 
 export default ApplicationStep;
+
+
