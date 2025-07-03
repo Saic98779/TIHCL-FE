@@ -285,6 +285,27 @@ function Level1() {
           </button>
         </Modal.Header>
         <Modal.Body>
+
+
+
+          {/* Application Details Section */}
+          <div className="card mb-3">
+            <div className="card-header bg-light">
+              <h5 className="mb-0">Application Details</h5>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-4 mb-3"><label className="fw-600">Application No</label><div>{selectedApplication?.applicationNo || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Status</label><div>{selectedApplication?.status || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Date Of Submission</label><div>{selectedApplication?.dateOfSubmission || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Application Status</label><div>{selectedApplication?.applicationStatus || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Executive</label><div>{selectedApplication?.executive || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Executive Feedback Date</label><div>{selectedApplication?.executiveFeedbackDate || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Reason For Rejection</label><div>{selectedApplication?.reasonForRejection || 'N/A'}</div></div>
+                <div className="col-md-4 mb-3"><label className="fw-600">Help Message</label><div>{selectedApplication?.helpMsg || 'N/A'}</div></div>
+              </div>
+            </div>
+          </div>
           {/* Basic Information Section */}
           <div className="card mb-3">
             <div className="card-header bg-light">
@@ -380,24 +401,7 @@ function Level1() {
             </div>
           </div>
 
-          {/* Application Details Section */}
-          <div className="card mb-3">
-            <div className="card-header bg-light">
-              <h5 className="mb-0">Application Details</h5>
-            </div>
-            <div className="card-body">
-              <div className="row">
-                <div className="col-md-4 mb-3"><label className="fw-600">Application No</label><div>{selectedApplication?.applicationNo || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Status</label><div>{selectedApplication?.status || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Date Of Submission</label><div>{selectedApplication?.dateOfSubmission || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Application Status</label><div>{selectedApplication?.applicationStatus || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Executive</label><div>{selectedApplication?.executive || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Executive Feedback Date</label><div>{selectedApplication?.executiveFeedbackDate || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Reason For Rejection</label><div>{selectedApplication?.reasonForRejection || 'N/A'}</div></div>
-                <div className="col-md-4 mb-3"><label className="fw-600">Help Message</label><div>{selectedApplication?.helpMsg || 'N/A'}</div></div>
-              </div>
-            </div>
-          </div>
+          
 
 
           {/* Loans Table */}
@@ -413,6 +417,7 @@ function Level1() {
                       <tr>
                         <th>S.No</th>
                         <th>Name Of Bank / Lender</th>
+                         <th>Nature of loan</th>
                         <th>Limit Sanctioned</th>
                         <th>Outstanding Amount</th>
                         <th>Overdue Amount</th>
@@ -424,6 +429,7 @@ function Level1() {
                         <tr key={index}>
                           <td>{index + 1}</td>
                           <td>{loan.bankName || 'N/A'}</td>
+                          <td>{loan.natureOfLoan || 'N/A'}</td>
                           <td>{loan.limitSanctioned ?? 'N/A'}</td>
                           <td>{loan.outstandingAmount ?? 'N/A'}</td>
                           <td>{loan.overdueAmount ?? 'N/A'}</td>

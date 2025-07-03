@@ -367,11 +367,11 @@ const transformRiskCategoriesForApi = (riskCategories) => {
             existingCredit: localData.loansCreditFacilities === 'Yes',
             creditFacilityDetails: localData.loans.map(loan => ({
                 bankName: loan.bankName,
-                 natureOfLoan: loan.natureOfLoan,
+                natureOfLoan: loan.natureOfLoan,
                 limitSanctioned: parseFloat(loan.limitSanctioned) || 0,
                 outstandingAmount: parseFloat(loan.outstandingAmount) || 0,
                 overdueAmount: parseFloat(loan.overdueAmount) || 0,
-                overdueDate: loan.overdueSince || ""
+                overdueDate: loan.overdueDate || ""
             })),
             requiredCreditLimit: parseFloat(localData.requiredCreditLimit) || 0,
             investmentSubsidy: localData.investmentSubsidy,
@@ -436,6 +436,7 @@ const transformRiskCategoriesForApi = (riskCategories) => {
         });
         setNewLoan({
             bankName: '',
+            natureOfLoan:'',
             limitSanctioned: '',
             outstandingAmount: '',
             overdueAmount: '',
@@ -1228,7 +1229,7 @@ const transformRiskCategoriesForApi = (riskCategories) => {
                                                         <td className='border text-center'>{loan.limitSanctioned}</td>
                                                         <td className='border text-center'>{loan.outstandingAmount}</td>
                                                         <td className='border text-center'>{loan.overdueAmount}</td>
-                                                        <td className='border text-center'>{loan.overdueSince}</td>
+                                                        <td className='border text-center'>{loan.overdueDate}</td>
                                                         <td className='border text-center' >
                                                             <div className="d-flex gap-2 text-center">
                                                                 <button

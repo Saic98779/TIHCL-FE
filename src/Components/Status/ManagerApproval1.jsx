@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { submitPreliminaryAssessment } from '../../services/RegistrationService/RegistrationService';
 import success from '../../assets/pending.gif'
 import rejected from '../../assets/reject.gif'
+import approval from '../../assets/success.gif'
 const ManagerApproval1 = ({ formData, nextStep, prevStep , status}) => {
+  console.log("FORMDATA",formData)
   console.log("status",status)
   //const status = formData?.managerApproval1?.status || 'pending';
   const rejectionReason = formData?.managerApproval1?.rejectionReason || '';
@@ -10,7 +12,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep , status}) => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+ 
   const fetchPreliminaryData = async () => {
     try {
       setLoading(true);
@@ -53,15 +55,15 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep , status}) => {
         <div className="card-body">
           <div className="row">
             <div className="col-12 col-sm-12 col-md-8 offset-lg-2 col-lg-6 offset-lg-3">
-              {status === 'pending' && (
+              {status !== 'REJECTED_MANAGER_APPROVAL_1' && status !== 'approved' && (
+  <div className="d-flex align-items-center justify-content-center flex-column mb-3">
+    <img src={success} className="img-fluid" alt="pending" width="200" />
+    <h3 className="text-warning">Waiting for manager approval</h3>
+  </div>
+)}
+              {status === 'manager_approval_1' && (
                 <div className="d-flex align-items-center justify-content-center flex-column mb-3">
-                  <img src={success} className="img-fluid" alt="pending" width="200" />
-                  <h3 className="text-warning">Waiting for manager approval</h3>
-                </div>
-              )}
-              {status === 'approved' && (
-                <div className="d-flex align-items-center justify-content-center flex-column mb-3">
-                  <img src="assets/img/success.gif" className="img-fluid" alt="success" width="200" />
+                  <img src={approval} className="img-fluid" alt="success" width="200" />
                   <h5>Approved</h5>
                 </div>
               )}
@@ -197,7 +199,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep , status}) => {
         className="previous btn btn-secondary float-start"
         value="Previous"
         onClick={prevStep}
-        //disabled
+        disabled
       />
       <input
         type="button"
@@ -205,7 +207,7 @@ const ManagerApproval1 = ({ formData, nextStep, prevStep , status}) => {
         className="next btn btn-primary float-end"
         value="Next"
         onClick={nextStep}
-        disabled={status}
+        disabled
       />
     </fieldset>
   );
